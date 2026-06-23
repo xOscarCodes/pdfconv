@@ -28,10 +28,11 @@
 
 **Files:**
 - Modify: `pyproject.toml` (deps, version, extras, classifiers, description)
+- Modify: `pdfconv/__init__.py` (runtime `__version__` string)
 - Modify: `requirements.txt` (keep in sync)
 
 **Interfaces:**
-- Produces: `markitdown`, `mcp` (extra), `openai` (extra) importable; `pdfconv` version `2.0.0`.
+- Produces: `markitdown`, `mcp` (extra), `openai` (extra) importable; `pdfconv` version `2.0.0` (both the packaging `[project].version` and the runtime `pdfconv.__version__`).
 
 - [ ] **Step 1: Add markitdown to core deps + version bump in `pyproject.toml`**
 
@@ -55,7 +56,15 @@ pdf2docx-mcp = "pdfconv.mcp_server:main"
 ```
 (Keep `pdf2docx` and `pdf2docx-gui`. Note: spec §7 calls it `pdfconv-mcp`; use `pdf2docx-mcp` to stay consistent with the existing `pdf2docx*` script family — either is acceptable, pick one and use it in docs.)
 
-- [ ] **Step 2: Sync `requirements.txt`**
+- [ ] **Step 2: Bump the runtime version in `pdfconv/__init__.py`**
+
+`pyproject.toml`'s `[project].version` is packaging metadata; the string every user-facing surface actually reads is `pdfconv.__version__` (cli.py argparse `version=f"%(prog)s {__version__}"`, gui.py AboutDialog/header `f"Version {__version__}"`, the settings drawer `f"PDF Converter v{__version__}"`, and the startup log). Bump it to match:
+```python
+__version__ = "2.0.0"
+```
+(Replace the existing `__version__ = "1.0.0"` line. Without this, `pdf2docx_app.py --version` still prints `1.0.0` and the Task 6 / Final-verification `--version → 2.0.0` checks fail.)
+
+- [ ] **Step 3: Sync `requirements.txt`**
 
 Add under the core deps block:
 ```
@@ -67,21 +76,23 @@ Add to the optional/extras comment block:
 # openai>=1.0         # optional LLM image captions (pip install .[llm])
 ```
 
-- [ ] **Step 3: Install and verify the import**
+- [ ] **Step 4: Install and verify the import**
 
 Run: `./.venv/Scripts/python.exe -m pip install -e ".[mcp,llm]"`
 Then: `./.venv/Scripts/python.exe -c "import markitdown, mcp, openai; from markitdown import MarkItDown; print('deps OK')"`
 Expected: `deps OK` (install is large; allow time. If the `azure-ai-contentunderstanding` beta fails to resolve, record the exact error and report — it is a known caveat.)
 
-- [ ] **Step 4: Validate pyproject parses**
+- [ ] **Step 5: Validate pyproject parses + runtime version**
 
 Run: `./.venv/Scripts/python.exe -c "import tomllib; d=tomllib.load(open('pyproject.toml','rb')); print(d['project']['version'], list(d['project']['optional-dependencies']))"`
 Expected: `2.0.0 ['dnd', 'ocr', 'dev', 'mcp', 'llm']`
+Run: `./.venv/Scripts/python.exe -c "import pdfconv; print(pdfconv.__version__)"`
+Expected: `2.0.0`
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 6: Commit**
 
 ```bash
-git add pyproject.toml requirements.txt
+git add pyproject.toml pdfconv/__init__.py requirements.txt
 git commit -m "build: add markitdown[all] + mcp/llm extras, bump to 2.0.0"
 ```
 
@@ -223,11 +234,20 @@ git commit -m "feat(engine): SUPPORTED_EXTENSIONS, discover_files, probe_file, S
 
 - [ ] **Step 1: Write failing tests**
 
-Add to `tests/test_engine.py` (uses the existing `_make_pdf`/`_task` helpers; add a docx maker):
+Add to `tests/test_engine.py` (uses the existing `_make_pdf`/`_task` helpers; add a docx maker and a blank-PNG maker — `fitz` is already imported at the top of the test file):
 ```python
 def _make_docx(path, text="Hello DOCX"):
     from docx import Document          # python-docx ships with pdf2docx
     d = Document(); d.add_paragraph(text); d.save(str(path))
+    return path
+
+
+def _make_blank_png(path, w=16, h=16):
+    # A solid-white, text-less, EXIF-free PNG via PyMuPDF (no PIL dependency).
+    # With no llm_client (captioning off) markitdown yields no extractable text.
+    pix = fitz.Pixmap(fitz.csRGB, fitz.IRect(0, 0, w, h))
+    pix.clear_with(255)
+    pix.save(str(path))
     return path
 
 
@@ -256,6 +276,14 @@ def test_convert_markitdown_empty_no_file(tmp_path):
     empty = tmp_path / "empty.txt"; empty.write_text("", encoding="utf-8")
     dst = tmp_path / "empty.md"
     res = engine._convert_markitdown(empty, dst)
+    assert res is not None and res["status"] == engine.NOTEXT and not dst.exists()
+
+
+def test_convert_markitdown_blank_png_notext(tmp_path):
+    # spec §9 empty-output guard: a text-less image (captioning off) -> NOTEXT, no file.
+    src = _make_blank_png(tmp_path / "blank.png")
+    dst = tmp_path / "blank.md"
+    res = engine._convert_markitdown(src, dst)
     assert res is not None and res["status"] == engine.NOTEXT and not dst.exists()
 ```
 
@@ -317,7 +345,7 @@ def _convert_markitdown(src, dst, *, llm_api_key: str = "", llm_model: str = "",
 - [ ] **Step 4: Run to verify pass**
 
 Run: `./.venv/Scripts/python.exe -m pytest tests/test_engine.py -k markitdown -v`
-Expected: PASS (4 passed). If `_make_docx` import fails, install python-docx is already present via pdf2docx; verify with `./.venv/Scripts/python.exe -c "import docx; print('ok')"`.
+Expected: PASS (5 passed). If `_make_docx` import fails, install python-docx is already present via pdf2docx; verify with `./.venv/Scripts/python.exe -c "import docx; print('ok')"`.
 
 - [ ] **Step 5: Commit**
 
@@ -367,12 +395,22 @@ def test_encrypted_pdf_to_md_with_password(tmp_path):
     res = engine.convert_one(_task(src, tmp_path / "enc.md", "md", password="s3cret"))
     assert res["status"] == engine.DONE
     assert "secret body" in (tmp_path / "enc.md").read_text(encoding="utf-8")
+
+
+def test_pdf_to_md_ignores_out_of_range_start(tmp_path):
+    # spec §3.1/§5: page range applies to PDF->DOCX only; for md output a stale
+    # out-of-range start is ignored (NOT a FAILED). The GUI greys but still
+    # carries start/end on the task dict, so the engine must not honour them.
+    src = _make_pdf(tmp_path / "a.pdf", text="Whole doc body", pages=2)
+    res = engine.convert_one(_task(src, tmp_path / "a.md", "md", start=99))
+    assert res["status"] == engine.DONE
+    assert "Whole doc body" in (tmp_path / "a.md").read_text(encoding="utf-8")
 ```
 
 - [ ] **Step 2: Run to verify fail**
 
-Run: `./.venv/Scripts/python.exe -m pytest tests/test_engine.py -k "nonpdf or pdf_to_md or encrypted_pdf_to_md" -v`
-Expected: FAIL (non-PDF hits `fitz.open` → FAILED; or SKIPPED not returned).
+Run: `./.venv/Scripts/python.exe -m pytest tests/test_engine.py -k "nonpdf or pdf_to_md or encrypted_pdf_to_md or out_of_range" -v`
+Expected: FAIL (non-PDF hits `fitz.open` → FAILED; or SKIPPED not returned; or — with today's pre-routing guard — PDF→md with `start=99` returns FAILED instead of DONE).
 
 - [ ] **Step 3: Restructure `convert_one`**
 
@@ -442,11 +480,6 @@ Replace the body of `convert_one` (from after the `result()` helper definition t
         finally:
             doc.close()
 
-        if start is not None and page_count and start >= page_count:
-            return result(FAILED,
-                          f"Start page {start} is past the last page (document has "
-                          f"{page_count} page(s), 0-indexed).")
-
         if not has_text:
             if ocr:
                 tmp_ocr = _run_ocr(work_path)
@@ -460,9 +493,20 @@ Replace the body of `convert_one` (from after the `result()` helper definition t
                                       "convert a text-based PDF.")
 
         if fmt == "docx":
+            # Page range applies to PDF->DOCX only (spec §3.1/§5). The out-of-range
+            # FAILED guard therefore lives here, inside the docx branch — it must
+            # NOT fire for md output, where any range is ignored (the GUI greys the
+            # Pages strip but still carries the entered start/end on the task dict).
+            if start is not None and page_count and start >= page_count:
+                return result(FAILED,
+                              f"Start page {start} is past the last page (document has "
+                              f"{page_count} page(s), 0-indexed).")
             _convert_docx(work_path, dst, start, end)
             return result(DONE)
         elif fmt == "md":
+            # start/end are intentionally ignored for Markdown (spec §3.1): no
+            # out-of-range guard, no page slicing — markitdown converts the whole
+            # (decrypted/OCR'd) document.
             r = _convert_markitdown(work_path, dst, llm_api_key=llm_api_key,
                                     llm_model=llm_model, llm_base_url=llm_base_url)
             if r is not None:
@@ -485,7 +529,7 @@ Also update the `convert_one` docstring's "Expected task keys" line to add `llm_
 - [ ] **Step 4: Run the full engine suite**
 
 Run: `./.venv/Scripts/python.exe -m pytest tests/test_engine.py -v`
-Expected: PASS, including the existing `test_convert_docx_*`, `test_encrypted_pdf_reported_then_unlocked`, `test_corrupt_pdf_is_isolated`, `test_page_range_past_end_fails_clearly`, and the new Task 3/4 tests. (The old `test_convert_markdown_contains_text` is updated in Task 11.)
+Expected: PASS, including the existing `test_convert_docx_*`, `test_encrypted_pdf_reported_then_unlocked`, `test_corrupt_pdf_is_isolated`, `test_page_range_past_end_fails_clearly` (it uses `fmt="docx"`, so the out-of-range guard — now inside the docx branch — still fires), the new `test_pdf_to_md_ignores_out_of_range_start` (md ignores the range), and the other new Task 3/4 tests. (The old `test_convert_markdown_contains_text` is updated in Task 11.)
 
 - [ ] **Step 5: Commit**
 
@@ -628,7 +672,7 @@ Update `--input` help to "A supported file or a folder of files." and the `--sta
                 skip += 1
                 tag, detail = "SKIP ", res.get("message", "")
 ```
-(Guard for empty `tasks`: if `not tasks`, still print the `Done:` summary with `pre_skipped` and return `0` instead of the early "no files" error — only error when `discover_files` found nothing at all.)
+- No separate empty-`tasks` guard is needed. The early "no files" error stays gated on the existing `if not pdfs:` check (i.e. `discover_files` found nothing at all). For an all-skipped folder `pdfs` is non-empty, so the existing executor block runs with an empty future set: `future_to_task` is `{}`, the `as_completed` loop no-ops, and — because `skip` is seeded to `pre_skipped` and `total = len(tasks) + pre_skipped` — the final line prints `Done: 0 succeeded · 0 failed · N skipped` and `run` returns `0` (no `fail`). Do **not** add an `if not tasks:` branch that prints the summary, or it will print twice. (`workers = max(1, min(workers, len(pdfs)))` keeps `max_workers >= 1` even when every file is pre-skipped, so the pool constructs fine with no submitted tasks.)
 
 - [ ] **Step 5: Run to verify pass**
 
@@ -644,22 +688,24 @@ git commit -m "feat(cli): multi-format discovery, --format default md, non-PDF+d
 
 ---
 
-## Task 7: GUI — ingress gates & copy (make new formats reachable)
+## Task 7: GUI — ingress gates, probe routing & copy (make new formats reachable)
 
 **Files:**
-- Modify: `pdfconv/gui.py` (`add_files`, `_add_paths`, `add_folder`, `_on_drop`, drop-overlay/empty-state copy)
+- Modify: `pdfconv/gui.py` (`add_files`, `_add_paths`, `add_folder`, `_on_drop`, `_probe_async`, drop-overlay/empty-state copy)
 
 **Interfaces:**
-- Consumes: `engine.SUPPORTED_EXTENSIONS`, `engine.discover_files`.
-- Produces: GUI accepts all supported types from picker / folder / drag-drop.
+- Consumes: `engine.SUPPORTED_EXTENSIONS`, `engine.discover_files`, `engine.probe_file`.
+- Produces: GUI accepts all supported types from picker / folder / drag-drop, and probes them correctly (non-PDFs resolve to `QUEUED`, not `FAILED`/`NOTEXT`).
 
-- [ ] **Step 1: Add a headless ingress test** (`tests/test_gui_ingress.py`)
+- [ ] **Step 1: Add headless ingress + probe-routing tests** (`tests/test_gui_ingress.py`)
 
 ```python
 import os
 os.environ["PDFCONV_REDUCED_MOTION"] = "1"
+import queue as _queue
 from pathlib import Path
 from docx import Document
+from pdfconv import engine
 
 
 def test_add_paths_accepts_supported(tmp_path):
@@ -674,15 +720,55 @@ def test_add_paths_accepts_supported(tmp_path):
         assert names == {"a.docx", "b.txt"}      # .bin rejected, others accepted
     finally:
         app.destroy()
+
+
+def _drain_probes(app, expected, timeout=10.0):
+    """Pull `expected` probe events off the queue (the probe runs on a daemon
+    thread) and apply each via `_handle_event`, so item.status reflects the probe."""
+    import time
+    applied = 0
+    deadline = time.monotonic() + timeout
+    while applied < expected and time.monotonic() < deadline:
+        try:
+            evt = app.event_queue.get(timeout=0.2)
+        except _queue.Empty:
+            continue
+        if evt[0] == "probe":
+            app._handle_event(evt)
+            applied += 1
+    assert applied == expected, f"only {applied}/{expected} probe events arrived"
+
+
+def test_nonpdf_probes_to_queued(tmp_path):
+    """A .docx and a .csv must probe to QUEUED via engine.probe_file — NOT
+    FAILED (probe_pdf errors on a .csv) or NOTEXT (probe_pdf sees no text layer
+    in a .docx). This guards the GUI ingress against the probe_pdf regression."""
+    import pdfconv.gui as gui
+    app = gui.App()
+    try:
+        Document().save(str(tmp_path / "a.docx"))
+        (tmp_path / "b.csv").write_text("a,b\n1,2\n", encoding="utf-8")
+        app._add_paths([tmp_path / "a.docx", tmp_path / "b.csv"])
+        _drain_probes(app, expected=2)
+        by_name = {it.name: it.status for it in app.items}
+        assert by_name["a.docx"] == engine.QUEUED
+        assert by_name["b.csv"] == engine.QUEUED
+    finally:
+        app.destroy()
 ```
 
 - [ ] **Step 2: Run to verify fail**
 
 Run: `PYTHONPATH='D:\pdftodocx' ./.venv/Scripts/python.exe -m pytest tests/test_gui_ingress.py -v`
-Expected: FAIL (`_add_paths` drops non-`.pdf`, so `names == set()`).
+Expected: FAIL — `test_add_paths_accepts_supported` because `_add_paths` drops non-`.pdf` (`names == set()`); `test_nonpdf_probes_to_queued` because `_probe_async` calls `engine.probe_pdf`, which makes the `.csv` resolve to `FAILED` (`info.error`) and the `.docx` to `NOTEXT` (`has_text=False`), not `QUEUED`.
 
-- [ ] **Step 3: Edit the four gates + copy in `gui.py`**
+- [ ] **Step 3: Edit the four gates + probe routing + copy in `gui.py`**
 
+- `_probe_async` (currently `info = engine.probe_pdf(str(item.path))`): route through the type-aware probe so non-PDFs land on a ready `PdfInfo` instead of a `fitz.open` error / no-text-layer reading:
+```python
+                info = engine.probe_file(str(item.path))
+```
+  This is the consumer of `engine.probe_file` (Task 2) required by spec §3.4: `probe_pdf` errors on a `.csv` (→ `_handle_event` maps `info.error` to `engine.FAILED`) and reports `has_text=False` for a `.docx` (→ `engine.NOTEXT`); `probe_file` returns `PdfInfo(pages=0, has_text=True, encrypted=False, error=None)` for non-PDFs so `_handle_event` falls through to `engine.QUEUED`. Without this rewire, supported non-PDF rows show "Failed"/"No text" before any conversion and the Task 8 pre-skip (`item.status == engine.NOTEXT`) would wrongly skip valid `.docx`/`.txt`/`.csv` files queued for Markdown.
 - `add_files` filetypes (currently `[("PDF files", "*.pdf")]`): replace with an all-supported group:
 ```python
         exts = " ".join(sorted("*" + e for e in engine.SUPPORTED_EXTENSIONS))
@@ -696,7 +782,7 @@ Expected: FAIL (`_add_paths` drops non-`.pdf`, so `names == set()`).
 ```
 - `add_folder`: replace `engine.discover_pdfs(Path(folder), recursive=True)` with `engine.discover_files(Path(folder), recursive=True)`; change the warning text "No PDFs found in {folder}" → "No supported files found in {folder}".
 - `_on_drop`: replace `engine.discover_pdfs(path, recursive=True)` with `engine.discover_files(...)`; change `elif path.suffix.lower() == ".pdf":` → `elif path.suffix.lower() in engine.SUPPORTED_EXTENSIONS:`.
-- Copy: drop-overlay label "Drop PDFs to add to the queue" → "Drop files to add to the queue"; empty-state subtitle "Add PDFs or drop a folder here..." → "Add files or drop a folder here to convert to Markdown or (for PDFs) Word."
+- Copy: drop-overlay label "Drop PDFs to add to the queue" → "Drop files to add to the queue"; empty-state subtitle "Add PDFs or drop a folder here to start converting to DOCX or Markdown." → "Add files or drop a folder here to convert to Markdown or (for PDFs) Word."
 
 - [ ] **Step 4: Run to verify pass**
 
@@ -707,7 +793,7 @@ Expected: PASS.
 
 ```bash
 git add pdfconv/gui.py tests/test_gui_ingress.py
-git commit -m "feat(gui): accept all supported input types (picker, folder, drag-drop)"
+git commit -m "feat(gui): accept all supported input types + probe_file routing (picker, folder, drag-drop)"
 ```
 
 ---
@@ -796,7 +882,7 @@ def _pages_label(item: FileItem) -> str:
         self.start_entry.configure(state=state)
         self.end_entry.configure(state=state)
 ```
-Call the same enable/disable once at the end of `_build_options` to set the initial state from `self.cfg["format"]`. (Disabling preserves entered values per spec §5.)
+Call the same enable/disable once at the end of `_build_options` to set the initial state from `self.cfg["format"]`. (Disabling preserves entered values per spec §5: `_start_run` still carries the entered `start`/`end` on every task dict, but the engine ignores them for `fmt == "md"` and only honours them in the docx branch — including the out-of-range FAILED guard, which is scoped to PDF→DOCX per spec §3.1, see Task 4. So a stale out-of-range value left over from a docx run never FAILs an md conversion.)
 - DOCX non-PDF hint: in `FileRow.refresh`, when `self.app.cfg["format"] == "docx"` and the row's file is non-PDF, show a small hint in the status cell (e.g. set `self.status_lbl` text to "DOCX is PDF-only" muted) — minimal: reuse the existing status label styling. (Keep this lightweight; the authoritative skip happens in `_start_run`.)
 
 - [ ] **Step 4: Run to verify pass**
@@ -842,11 +928,37 @@ In `_start_run`, where the task dict is built, add:
 
 - [ ] **Step 3: Add the drawer settings group**
 
-In `SettingsDrawer._build`, add an "Image captions (optional)" section after Notifications with three `CTkEntry` fields bound to `cfg["llm_api_key"]` (show="•"), `cfg["llm_model"]`, `cfg["llm_base_url"]`, persisted in `close()` like the other settings. At build, probe availability once:
+In `SettingsDrawer._build`, add an "Image captions (optional)" section after Notifications, wired the **same way** as the existing prefix/suffix fields (`self.prefix_var`/`self.suffix_var` → `CTkEntry(textvariable=...)` → persisted in `close()`), so it stays consistent with the rest of the drawer. Use the existing `_section` / `_caption` / `_rule` builders and the existing entry styling (`fg_color=theme.BG`, `border_color=theme.BORDER`, `text_color=theme.TEXT`, `font=f.body`) — no ad-hoc styling (Global Constraint; Task 14 audits this).
+
+- Create the three StringVars from `cfg` at build time:
+```python
+        self.llm_key_var = ctk.StringVar(value=cfg["llm_api_key"])
+        self.llm_model_var = ctk.StringVar(value=cfg["llm_model"])
+        self.llm_base_url_var = ctk.StringVar(value=cfg["llm_base_url"])
+```
+- Build the section and the three entries (API key field masked with `show="•"`); add captions via `_caption` (e.g. "Model defaults to gpt-4o" / "Optional OpenAI-compatible endpoint"):
+```python
+        self._section(body, "Image captions (optional)")
+        # API key (masked), Model, Base URL — each a CTkLabel + CTkEntry, e.g.:
+        ctk.CTkEntry(body, textvariable=self.llm_key_var, show="•", height=30,
+                     fg_color=theme.BG, border_color=theme.BORDER,
+                     text_color=theme.TEXT, font=f.body).pack(fill="x", padx=4)
+        # ...model entry (textvariable=self.llm_model_var) and base-URL entry
+        #    (textvariable=self.llm_base_url_var) the same way...
+        self._rule(body)
+```
+- Persist them in `close()` alongside the other settings (mirroring `cfg["prefix"] = self.prefix_var.get()`):
+```python
+        cfg["llm_api_key"] = self.llm_key_var.get()
+        cfg["llm_model"] = self.llm_model_var.get()
+        cfg["llm_base_url"] = self.llm_base_url_var.get()
+```
+- At build, probe availability once (no eager `import openai`, keeping the import lazy per spec §3.5):
 ```python
         import importlib.util
         if importlib.util.find_spec("openai") is None:
-            # grey the fields + caption "Install pdfconv[llm] to enable image captions"
+            # disable the three entries (state="disabled") + add a _caption
+            # "Install pdfconv[llm] to enable image captions"
 ```
 
 - [ ] **Step 4: Verify compile + config round-trip**
