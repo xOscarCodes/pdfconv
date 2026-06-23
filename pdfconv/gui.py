@@ -544,10 +544,10 @@ class SettingsDrawer:
         app.bind("<Escape>", lambda _e: self.close())
         # slide in
         if REDUCED_MOTION:
-            self.drawer.place(relx=1.0, x=-self.WIDTH, rely=0, relheight=1)
+            self._place_drawer(-self.WIDTH)
         else:
             self._x = 0
-            self.drawer.place(relx=1.0, x=0, rely=0, relheight=1)
+            self._place_drawer(0)
             self._animate_in()
 
     def _animate_in(self):
@@ -556,10 +556,17 @@ class SettingsDrawer:
         self._x -= max(18, self.WIDTH // 12)
         if self._x <= -self.WIDTH:
             self._x = -self.WIDTH
-            self.drawer.place_configure(x=self._x)
+            # Use place() (not place_configure): customtkinter DPI-scales the x
+            # offset on place() to match the scaled drawer width, so the drawer's
+            # right edge lands exactly on the window edge. place_configure() is
+            # NOT scaled, which left the drawer overhanging the window on HiDPI.
+            self._place_drawer(self._x)
             return
-        self.drawer.place_configure(x=self._x)
+        self._place_drawer(self._x)
         self.app.after(12, self._animate_in)
+
+    def _place_drawer(self, x):
+        self.drawer.place(relx=1.0, x=x, rely=0, relheight=1)
 
     def _build(self):
         app = self.app
