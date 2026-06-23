@@ -24,6 +24,7 @@ strip, and a footer with progress, an end-of-run summary, and a collapsible log.
 - [Project layout](#project-layout)
 - [Troubleshooting](#troubleshooting)
 - [Running the tests](#running-the-tests)
+- [License](#license)
 
 ---
 
@@ -310,3 +311,32 @@ pytest
 
 The suite generates tiny PDFs on the fly and checks DOCX + Markdown output plus the
 encrypted, corrupt, and out-of-range-page paths. No fixtures or network needed.
+
+---
+
+## License
+
+This project is licensed under the **GNU Affero General Public License v3.0 or
+later (AGPL-3.0-or-later)** — see [`LICENSE`](LICENSE).
+
+Copyright © 2026 xOscarCodes.
+
+### Why AGPL?
+
+The converter depends on **PyMuPDF**, which is licensed under the AGPL-3.0 (or a
+paid commercial license from Artifex). `pdf2docx` also runs on PyMuPDF, so it is a
+required dependency. Because of that, the combined work is distributed under the
+AGPL-3.0. In practice this means: anyone who receives or interacts with this
+software (including over a network) is entitled to the complete corresponding
+source code, and derivative works must also be licensed under the AGPL-3.0.
+
+### Third-party licenses
+
+| Component | License |
+|---|---|
+| PyMuPDF (`fitz`) | AGPL-3.0 / Artifex commercial |
+| pdf2docx | MIT |
+| pikepdf | MPL-2.0 |
+| customtkinter | CC0-1.0 |
+| python-docx | MIT |
+| Pillow | HPND / MIT-CMU |

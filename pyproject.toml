@@ -8,14 +8,15 @@ version = "1.0.0"
 description = "Cross-platform desktop + CLI tool that converts PDFs to editable Word (.docx) and Markdown (.md)."
 readme = "README.md"
 requires-python = ">=3.10"
-license = { text = "MIT" }
-authors = [{ name = "PDF Converter" }]
+license = { text = "AGPL-3.0-or-later" }
+authors = [{ name = "xOscarCodes" }]
 keywords = ["pdf", "docx", "markdown", "converter", "gui", "cli"]
 classifiers = [
     "Environment :: X11 Applications",
     "Environment :: Win32 (MS Windows)",
     "Environment :: MacOS X",
     "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Topic :: Office/Business",
