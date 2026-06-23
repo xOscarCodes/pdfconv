@@ -1,0 +1,51 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pdfconv"
+version = "1.0.0"
+description = "Cross-platform desktop + CLI tool that converts PDFs to editable Word (.docx) and Markdown (.md)."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "PDF Converter" }]
+keywords = ["pdf", "docx", "markdown", "converter", "gui", "cli"]
+classifiers = [
+    "Environment :: X11 Applications",
+    "Environment :: Win32 (MS Windows)",
+    "Environment :: MacOS X",
+    "Intended Audience :: End Users/Desktop",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Topic :: Office/Business",
+    "Topic :: Utilities",
+]
+
+# Core runtime dependencies (kept in sync with requirements.txt).
+dependencies = [
+    "pdf2docx>=0.5.8",
+    "PyMuPDF>=1.23.0",
+    "customtkinter>=5.2.0",
+    "pikepdf>=8.0.0",
+]
+
+[project.optional-dependencies]
+dnd = ["tkinterdnd2>=0.4.0"]          # drag-and-drop (FR-5)
+ocr = ["ocrmypdf>=15.0.0"]            # OCR for scanned PDFs (also needs Tesseract on PATH)
+dev = ["pytest>=7.0", "pyinstaller>=6.0.0"]
+
+[project.scripts]
+pdf2docx = "pdfconv.cli:main_cli"
+pdf2docx-gui = "pdfconv.gui:main"
+
+[tool.setuptools]
+py-modules = ["pdf2docx_app"]
+packages = ["pdfconv"]
+include-package-data = true
+
+[tool.setuptools.package-data]
+pdfconv = ["assets/*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

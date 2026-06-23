@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+
+# Build artifacts
+build/
+dist/
+*.spec.bak
+
+# App data (local only)
+.pdfconverter/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE / tooling
+.idea/
+.vscode/
+.claude/settings.local.json

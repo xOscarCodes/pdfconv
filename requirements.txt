@@ -1,0 +1,12 @@
+# Core runtime dependencies (Section 4 of the PRD)
+pdf2docx>=0.5.8        # PDF -> DOCX conversion (Converter); also pulls in PyMuPDF + python-docx
+PyMuPDF>=1.23.0        # fitz: text-layer detection, page counts, Markdown extraction (transitively required by pdf2docx, pinned explicitly because we import it directly)
+customtkinter>=5.2.0   # modern themed Tk widgets (committed GUI toolkit)
+pikepdf>=8.0.0         # in-memory decryption of password-protected PDFs
+
+# --- Optional extras -------------------------------------------------
+# tkinterdnd2>=0.4.0   # drag-and-drop support (FR-5). The app degrades gracefully without it.
+# ocrmypdf>=15.0.0     # OCR path for scanned PDFs (FR-12). Off by default; requires Tesseract on PATH.
+
+# --- Build-time only -------------------------------------------------
+# pyinstaller>=6.0.0   # standalone executable packaging (build per-OS; no cross-compile)

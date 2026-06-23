@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@keyframes pcpulse{0%,100%{opacity:1}50%{opacity:.28}}
+@keyframes pcspin{to{transform:rotate(360deg)}}
+@keyframes pcrise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes pcflash{0%{background:color-mix(in srgb,var(--st-done) 20%,transparent)}100%{background:transparent}}
+*{box-sizing:border-box}
+body{margin:0}
+[data-pcroot] [data-row]:hover{background:var(--hover)}
+[data-pcroot] [data-x]{opacity:0;transition:opacity .15s,background .15s,color .15s}
+[data-pcroot] [data-row]:hover [data-x]{opacity:1}
+[data-pcroot]{--desk:#070b16;--bg:#0F172A;--surface:#1E293B;--inset:#0B1220;--border:#334155;--border-soft:#293650;--text:#F1F5F9;--muted:#94A3B8;--accent:#6366F1;--accent-h:#4F46E5;--accent-soft:rgba(99,102,241,.18);--st-queued:#64748B;--st-conv:#F59E0B;--st-done:#22C55E;--st-fail:#EF4444;--shadow:0 28px 70px -20px rgba(0,0,0,.7);--hover:rgba(148,163,184,.08);--sans:'Segoe UI',Inter,Ubuntu,'DejaVu Sans',Cantarell,system-ui,sans-serif;--mono:'Cascadia Code',Consolas,'DejaVu Sans Mono','Ubuntu Mono',ui-monospace,monospace;min-height:100vh;background-color:var(--desk);background-image:radial-gradient(1100px 560px at 50% -8%,color-mix(in srgb,var(--accent) 13%,transparent),transparent 62%),radial-gradient(circle at 1px 1px,color-mix(in srgb,var(--text) 7%,transparent) 1px,transparent 0);background-size:100% 100%,22px 22px;color:var(--text);font-family:var(--sans);-webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums}
+[data-pcroot][data-theme="light"]{--desk:#E2E8F0;--bg:#F8FAFC;--surface:#FFFFFF;--inset:#F1F5F9;--border:#E2E8F0;--border-soft:#EDF1F6;--text:#0F172A;--muted:#64748B;--accent-soft:rgba(99,102,241,.1);--shadow:0 28px 70px -24px rgba(15,23,42,.28);--hover:rgba(15,23,42,.04)}
+[data-pcroot] ::-webkit-scrollbar{width:11px;height:11px}
+[data-pcroot] ::-webkit-scrollbar-thumb{background:var(--border);border-radius:8px;border:3px solid transparent;background-clip:content-box}
+[data-pcroot] ::-webkit-scrollbar-thumb:hover{background:var(--muted)}
+[data-pcroot] input{font-family:inherit;outline:none}
+[data-pcroot] input:focus-visible{border-color:var(--accent)!important;box-shadow:0 0 0 3px var(--accent-soft)}
+[data-pcroot] button:focus-visible{outline:none;box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--accent)}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</helmet>
+
+<div data-pcroot data-theme="{{ theme }}" style="{{ rootStyle }}">
+
+  <div style="position:fixed;top:16px;left:50%;transform:translateX(-50%);z-index:60;display:flex;align-items:center;gap:5px;background:var(--surface);border:1px solid var(--border);border-radius:999px;padding:5px;box-shadow:var(--shadow)">
+    <button onClick="{{ onApp }}" style="{{ navAppStyle }}">App</button>
+    <button onClick="{{ onSys }}" style="{{ navSysStyle }}">Design system</button>
+    <button onClick="{{ onFmt }}" style="{{ navFmtStyle }}">Format options</button>
+    <span style="width:1px;height:18px;background:var(--border);margin:0 3px"></span>
+    <button onClick="{{ onTheme }}" aria-label="Toggle theme" style="display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:999px;border:none;background:transparent;color:var(--muted);cursor:pointer">
+      <sc-if value="{{ isDark }}" hint-placeholder-val="{{ true }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path></svg></sc-if>
+      <sc-if value="{{ isLight }}" hint-placeholder-val="{{ false }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"></path></svg></sc-if>
+    </button>
+  </div>
+
+  <!-- ============ APP VIEW ============ -->
+  <sc-if value="{{ isApp }}" hint-placeholder-val="{{ true }}">
+  <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:74px 24px 36px">
+    <div style="width:100%;max-width:980px;height:min(80vh,724px);min-height:580px;display:flex;flex-direction:column;background:var(--bg);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow),inset 0 1px 0 rgba(255,255,255,.05);overflow:hidden;animation:pcrise .35s ease-out">
+
+      <sc-if value="{{ chrome }}" hint-placeholder-val="{{ true }}">
+      <div style="height:38px;flex:none;display:flex;align-items:center;gap:8px;padding:0 14px;background:var(--surface);border-bottom:1px solid var(--border)">
+        <span style="font-size:11.5px;color:var(--muted);font-weight:600;letter-spacing:.02em">PDF Converter</span>
+        <div style="margin-left:auto;display:flex;align-items:center;gap:16px;color:var(--muted)">
+          <svg width="13" height="13" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14"></path></svg>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="1.5"></rect></svg>
+          <svg width="13" height="13" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- header -->
+      <div style="flex:none;display:flex;align-items:center;gap:13px;padding:16px 20px;border-bottom:1px solid var(--border-soft)">
+        <div style="width:30px;height:30px;border-radius:8px;flex:none;background:linear-gradient(135deg,var(--accent),var(--accent-h));display:flex;align-items:center;justify-content:center;color:#fff;box-shadow:0 4px 12px -2px var(--accent-soft)">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3v4a1 1 0 0 0 1 1h4"></path><path d="M14 3H7a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V8z"></path><path d="M9 14l2 2 4-4"></path></svg>
+        </div>
+        <div style="min-width:0">
+          <div style="font-size:16px;font-weight:600;letter-spacing:-.01em;line-height:1.2">PDF → DOCX · Markdown</div>
+          <div style="font-size:12px;color:var(--muted)">Convert PDFs to editable documents</div>
+        </div>
+        <div style="margin-left:auto;display:flex;align-items:center;gap:8px">
+        <button onClick="{{ onSettings }}" aria-label="Settings" style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:7px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 8 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H2a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 3.6 8a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H8a1.65 1.65 0 0 0 1-1.51V2a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V8a1.65 1.65 0 0 0 1.51 1H22a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></button>
+        <div style="display:flex;align-items:center;gap:3px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:3px">
+          <button onClick="{{ onTheme }}" aria-label="Dark theme" style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:24px;border-radius:5px;border:none;cursor:pointer;background:{{ darkSegBg }};color:{{ darkSegFg }}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"></path></svg></button>
+          <button onClick="{{ onTheme }}" aria-label="Light theme" style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:24px;border-radius:5px;border:none;cursor:pointer;background:{{ lightSegBg }};color:{{ lightSegFg }}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path></svg></button>
+        </div></div>
+      </div>
+
+      <!-- action row -->
+      <div style="flex:none;display:flex;align-items:center;gap:8px;padding:12px 20px;border-bottom:1px solid var(--border-soft)">
+        <button onClick="{{ onConvert }}" style="{{ convBtn }}">
+          <sc-if value="{{ running }}" hint-placeholder-val="{{ false }}"><span style="width:14px;height:14px;border-radius:50%;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;animation:pcspin .7s linear infinite"></span>Converting…</sc-if>
+          <sc-if value="{{ notRunning }}" hint-placeholder-val="{{ true }}"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 15-6.7L21 8"></path><path d="M21 3v5h-5"></path><path d="M21 12a9 9 0 0 1-15 6.7L3 16"></path><path d="M3 21v-5h5"></path></svg>Convert</sc-if>
+        </button>
+        <button onClick="{{ onAddFiles }}" style="{{ addBtn }}"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>Add files</button>
+        <button onClick="{{ onAddFolder }}" style="{{ addBtn }}"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h3.5l2 2H19a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>Add folder</button>
+        <button onClick="{{ onClear }}" style="{{ clearBtn }}">Clear</button>
+        <div style="margin-left:auto;display:flex;align-items:center;gap:8px">
+          <span style="font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)">Format</span>
+          <div style="display:flex;align-items:center;gap:2px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:3px">
+            <button onClick="{{ onDocx }}" style="{{ docxStyle }}">DOCX</button>
+            <button onClick="{{ onMd }}" style="{{ mdStyle }}">Markdown</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- selection bar -->
+      <sc-if value="{{ hasSel }}" hint-placeholder-val="{{ false }}">
+      <div style="flex:none;display:flex;align-items:center;gap:12px;padding:8px 20px;background:var(--accent-soft);border-bottom:1px solid var(--border-soft);font-size:12.5px">
+        <span style="font-weight:600;color:var(--text)">{{ selCount }} selected</span>
+        <button onClick="{{ onRemoveSel }}" style="border:none;background:transparent;color:var(--st-fail);font-weight:600;font-size:12.5px;cursor:pointer">Remove selected</button>
+        <button onClick="{{ onDeselect }}" style="border:none;background:transparent;color:var(--muted);font-weight:600;font-size:12.5px;cursor:pointer">Deselect all</button>
+      </div>
+      </sc-if>
+
+      <!-- queue -->
+      <div onDragOver="{{ onDragOver }}" onDragLeave="{{ onDragLeave }}" onDrop="{{ onDrop }}" style="flex:1;overflow:auto;background:var(--bg);position:relative">
+        <sc-if value="{{ dragOver }}" hint-placeholder-val="{{ false }}">
+        <div style="position:absolute;inset:8px;z-index:5;border:2px dashed var(--accent);border-radius:10px;background:color-mix(in srgb,var(--accent) 10%,transparent);display:flex;align-items:center;justify-content:center;pointer-events:none">
+          <span style="font-size:13px;font-weight:600;color:var(--accent)">Drop PDFs to add to the queue</span>
+        </div>
+        </sc-if>
+        <sc-if value="{{ hasFiles }}" hint-placeholder-val="{{ true }}">
+        <div style="position:sticky;top:0;z-index:2;display:grid;grid-template-columns:30px 1fr 64px 60px 158px 30px;gap:10px;align-items:center;padding:9px 18px;background:var(--surface);border-bottom:1px solid var(--border);font-size:10.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)">
+          <div onClick="{{ onToggleAll }}" role="checkbox" style="width:17px;height:17px;border-radius:4px;border:1.5px solid {{ allSelBorder }};background:{{ allSelBg }};display:flex;align-items:center;justify-content:center;cursor:pointer">
+            <sc-if value="{{ allSelected }}" hint-placeholder-val="{{ false }}"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></sc-if>
+          </div>
+          <span>File</span><span>Pages</span><span>Format</span><span>Status</span><span></span>
+        </div>
+        <sc-for list="{{ rows }}" as="f" hint-placeholder-count="6">
+        <div data-row style="display:grid;grid-template-columns:30px 1fr 64px 60px 158px 30px;gap:10px;align-items:center;padding:11px 18px;border-bottom:1px solid var(--border-soft);box-shadow:{{ f.rail }};animation:{{ f.flashAnim }}">
+          <div onClick="{{ f.onToggle }}" role="checkbox" style="width:17px;height:17px;border-radius:4px;border:1.5px solid {{ f.selBorder }};background:{{ f.selBg }};display:flex;align-items:center;justify-content:center;cursor:pointer">
+            <sc-if value="{{ f.selected }}" hint-placeholder-val="{{ false }}"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></sc-if>
+          </div>
+          <div style="display:flex;align-items:center;gap:11px;min-width:0">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M14 3v4a1 1 0 0 0 1 1h4"></path><path d="M14 3H7a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V8z"></path></svg>
+            <div style="min-width:0">
+              <div style="font-size:13px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ f.name }}</div>
+              <div style="font-family:var(--mono);font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ f.dir }}</div>
+            </div>
+          </div>
+          <div style="font-size:12px;color:var(--muted)">{{ f.pages }}</div>
+          <div><span style="font-size:11px;font-weight:600;letter-spacing:.05em;color:var(--muted);opacity:.7">{{ f.fmt }}</span></div>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <div style="display:flex;align-items:center;gap:7px">
+              <span style="width:8px;height:8px;border-radius:50%;flex:none;background:{{ f.color }};box-shadow:0 0 0 3px {{ f.halo }};animation:{{ f.anim }};transition:background .3s,box-shadow .3s"></span>
+              <span style="font-size:12px;font-weight:600;color:{{ f.color }};white-space:nowrap;transition:color .3s">{{ f.statusLabel }}</span>
+              <sc-if value="{{ f.showUnlock }}" hint-placeholder-val="{{ false }}"><button onClick="{{ f.onUnlock }}" style="display:inline-flex;align-items:center;gap:4px;height:21px;padding:0 8px;border-radius:5px;border:1px solid var(--accent);background:var(--accent-soft);color:var(--accent);font-size:11px;font-weight:600;cursor:pointer"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0"></path></svg>Unlock</button></sc-if>
+            </div>
+            <sc-if value="{{ f.showBar }}" hint-placeholder-val="{{ false }}">
+            <div style="height:4px;border-radius:999px;background:var(--inset);overflow:hidden;max-width:130px">
+              <div style="height:100%;background:var(--st-conv);width:{{ f.pct }};transition:width .14s linear"></div>
+            </div>
+            </sc-if>
+          </div>
+          <button onClick="{{ f.onRemove }}" data-x aria-label="Remove" style="display:flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:5px;border:none;background:transparent;color:var(--muted);cursor:pointer" style-hover="background:var(--hover);color:var(--st-fail)"><svg width="14" height="14" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg></button>
+        </div>
+        </sc-for>
+        </sc-if>
+        <sc-if value="{{ noFiles }}" hint-placeholder-val="{{ false }}">
+        <div style="height:100%;min-height:300px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:48px;text-align:center">
+          <div style="width:62px;height:62px;border-radius:14px;border:2px dashed var(--border);display:flex;align-items:center;justify-content:center;color:var(--muted);margin-bottom:8px"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3v4a1 1 0 0 0 1 1h4"></path><path d="M14 3H7a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V8z"></path><path d="M12 18v-6M9 15l3 3 3-3"></path></svg></div>
+          <div style="font-size:15px;font-weight:600">No files in the queue</div>
+          <div style="font-size:13px;color:var(--muted);max-width:300px">Add PDFs or drop a folder here to start converting to DOCX or Markdown.</div>
+          <div style="display:flex;gap:8px;margin-top:14px">
+            <button onClick="{{ onAddFiles }}" style="{{ addBtn }}"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>Add files</button>
+            <button onClick="{{ onAddFolder }}" style="{{ addBtn }}">Add folder</button>
+          </div>
+        </div>
+        </sc-if>
+      </div>
+
+      <!-- options strip -->
+      <div style="flex:none;display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:12px 20px;border-top:1px solid var(--border-soft);background:var(--surface)">
+        <div style="display:flex;align-items:center;gap:9px">
+          <span style="font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)">Output</span>
+          <div style="display:flex;align-items:center;gap:2px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:3px">
+            <button onClick="{{ onOutNext }}" style="{{ outNextStyle }}">Next to source</button>
+            <button onClick="{{ onOutChoose }}" style="{{ outChooseStyle }}">Choose folder…</button>
+          </div>
+          <sc-if value="{{ isChoose }}" hint-placeholder-val="{{ false }}"><span style="font-family:var(--mono);font-size:11px;color:var(--muted);background:var(--bg);border:1px solid var(--border-soft);border-radius:5px;padding:3px 7px">{{ choosePath }}</span></sc-if><sc-if value="{{ showMirrorNote }}" hint-placeholder-val="{{ false }}"><span style="font-size:11px;color:var(--accent);font-weight:600;white-space:nowrap">· mirroring subfolders</span></sc-if>
+        </div>
+        <span style="width:1px;height:22px;background:var(--border-soft);flex:none"></span>
+        <div style="display:flex;align-items:center;gap:9px">
+          <span style="font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)">Pages</span>
+          <input value="{{ pStart }}" onChange="{{ onStart }}" placeholder="0" inputmode="numeric" style="width:46px;height:28px;text-align:center;border:1px solid {{ pageBorder }};border-radius:6px;background:var(--bg);color:var(--text);font-size:12.5px" />
+          <span style="color:var(--muted)">–</span>
+          <input value="{{ pEnd }}" onChange="{{ onEnd }}" placeholder="end" inputmode="numeric" style="width:46px;height:28px;text-align:center;border:1px solid {{ pageBorder }};border-radius:6px;background:var(--bg);color:var(--text);font-size:12.5px" />
+          <sc-if value="{{ pageError }}" hint-placeholder-val="{{ false }}"><span style="font-size:11.5px;color:var(--st-fail);font-weight:600;white-space:nowrap">start ≤ end</span></sc-if>
+        </div>
+        <span style="width:1px;height:22px;background:var(--border-soft);flex:none"></span>
+        <button onClick="{{ onOverwrite }}" style="display:flex;align-items:center;gap:8px;border:none;background:transparent;cursor:pointer;padding:0">
+          <span style="width:17px;height:17px;border-radius:4px;border:1.5px solid {{ ovBorder }};background:{{ ovBg }};display:flex;align-items:center;justify-content:center">
+            <sc-if value="{{ overwrite }}" hint-placeholder-val="{{ false }}"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></sc-if>
+          </span>
+          <span style="font-size:12.5px;color:var(--text)">Overwrite existing</span>
+        </button>
+        <span style="width:1px;height:22px;background:var(--border-soft);flex:none"></span>
+        <button onClick="{{ onOcr }}" style="display:flex;align-items:center;gap:8px;border:none;background:transparent;cursor:pointer;padding:0">
+          <span style="width:17px;height:17px;border-radius:4px;border:1.5px solid {{ ocrBorder }};background:{{ ocrBg }};display:flex;align-items:center;justify-content:center">
+            <sc-if value="{{ ocr }}" hint-placeholder-val="{{ false }}"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></sc-if>
+          </span>
+          <span style="font-size:12.5px;color:var(--text)">OCR scanned PDFs</span>
+        </button>
+      </div>
+
+      <!-- footer -->
+      <div style="flex:none;padding:14px 20px;border-top:1px solid var(--border-soft);background:var(--surface)">
+        <sc-if value="{{ showSummary }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;align-items:center;gap:12px;padding:10px 13px;margin-bottom:13px;border:1px solid var(--border);border-radius:9px;background:var(--bg);animation:pcrise .3s ease-out">
+          <div style="width:26px;height:26px;border-radius:50%;flex:none;background:var(--accent-soft);color:var(--accent);display:flex;align-items:center;justify-content:center"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></div>
+          <div style="font-size:13px"><span style="font-weight:600">Conversion complete.</span> <span style="color:var(--st-done);font-weight:600">{{ sumOk }} succeeded</span><span style="color:var(--muted)"> · </span><span style="color:var(--st-fail);font-weight:600">{{ sumFail }} failed</span><span style="color:var(--muted)"> · </span><span style="color:var(--st-conv);font-weight:600">{{ sumSkip }} skipped</span></div>
+        </div>
+        </sc-if>
+        <div style="display:flex;align-items:center;gap:14px">
+          <div style="flex:1;height:8px;border-radius:999px;background:var(--inset);overflow:hidden">
+            <div style="height:100%;border-radius:999px;background:var(--accent);width:{{ pct }};transition:width .14s linear"></div>
+          </div>
+          <span style="font-size:12.5px;font-weight:600;white-space:nowrap">{{ countLabel }}</span>
+          <span style="font-size:12px;color:var(--muted);white-space:nowrap;min-width:84px">{{ statusText }}</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:13px">
+          <button onClick="{{ onCancel }}" style="{{ cancelBtn }}">Cancel</button>
+          <button onClick="{{ onRetry }}" style="{{ retryBtn }}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"></path><path d="M3 3v5h5"></path></svg>Retry failed</button>
+          <button onClick="{{ onOpen }}" style="{{ openBtn }}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h3.5l2 2H19a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>Open output folder</button>
+          <button onClick="{{ onToggleLog }}" style="margin-left:auto;display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 10px;border-radius:7px;border:none;background:transparent;color:var(--muted);font-size:12.5px;font-weight:600;cursor:pointer">
+            <span style="display:inline-block;transform:rotate({{ logCaret }});transition:transform .15s">▸</span>Log
+          </button>
+        </div>
+        <sc-if value="{{ logOpen }}" hint-placeholder-val="{{ false }}">
+        <div style="margin-top:12px;max-height:150px;overflow:auto;border:1px solid var(--border-soft);border-radius:8px;background:var(--inset);padding:10px 13px;font-family:var(--mono);font-size:11.5px;line-height:1.75">
+          <sc-for list="{{ logLines }}" as="L" hint-placeholder-count="3"><div style="color:{{ L.color }};white-space:pre-wrap">{{ L.text }}</div></sc-for>
+          <sc-if value="{{ noLog }}" hint-placeholder-val="{{ false }}"><div style="color:var(--muted)">No activity yet. Press Convert to begin.</div></sc-if>
+        </div>
+        </sc-if>
+      </div>
+
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- ============ DESIGN SYSTEM VIEW ============ -->
+  <sc-if value="{{ isSystem }}" hint-placeholder-val="{{ false }}">
+  <div style="min-height:100vh;padding:88px 32px 60px;max-width:1120px;margin:0 auto">
+    <div style="font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin-bottom:8px">Design system</div>
+    <h1 style="margin:0 0 6px;font-size:26px;font-weight:600;letter-spacing:-.02em">A slate &amp; indigo system for a focused desktop utility</h1>
+    <p style="margin:0 0 28px;font-size:14px;color:var(--muted);max-width:620px">Restrained, data-first, and built for both light and dark. The boldness lives in one place — the live, colour-coded conversion status. Everything else stays quiet and disciplined.</p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:18px">
+
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px">
+        <div style="font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin-bottom:14px">Neutrals · current theme</div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div style="display:flex;align-items:center;gap:11px"><span style="width:34px;height:34px;border-radius:7px;border:1px solid var(--border);background:var(--bg)"></span><div><div style="font-size:12.5px;font-weight:600">bg</div><div style="font-family:var(--mono);font-size:11px;color:var(--muted)">#0F172A / #F8FAFC</div></div></div>
+          <div style="display:flex;align-items:center;gap:11px"><span style="width:34px;height:34px;border-radius:7px;border:1px solid var(--border);background:var(--surface)"></span><div><div style="font-size:12.5px;font-weight:600">surface</div><div style="font-family:var(--mono);font-size:11px;color:var(--muted)">#1E293B / #FFFFFF</div></div></div>
+          <div style="display:flex;align-items:center;gap:11px"><span style="width:34px;height:34px;border-radius:7px;background:var(--border)"></span><div><div style="font-size:12.5px;font-weight:600">border</div><div style="font-family:var(--mono);font-size:11px;color:var(--muted)">#334155 / #E2E8F0</div></div></div>
+          <div style="display:flex;align-items:center;gap:11px"><span style="width:34px;height:34px;border-radius:7px;border:1px solid var(--border);background:var(--text)"></span><div><div style="font-size:12.5px;font-weight:600">text</div><div style="font-family:var(--mono);font-size:11px;color:var(--muted)">#F1F5F9 / #0F172A</div></div></div>
+          <div style="display:flex;align-items:center;gap:11px"><span style="width:34px;height:34px;border-radius:7px;background:var(--muted)"></span><div><div style="font-size:12.5px;font-weight:600">muted</div><div style="font-family:var(--mono);font-size:11px;color:var(--muted)">#94A3B8 / #64748B</div></div></div>
+        </div>
+      </div>
+
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px">
+        <div style="font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin-bottom:14px">Accent &amp; status</div>
+        <div style="display:flex;gap:10px;margin-bottom:16px">
+          <div style="flex:1;height:54px;border-radius:8px;background:var(--accent);display:flex;align-items:flex-end;padding:7px;color:#fff;font-size:10.5px;font-weight:600">accent</div>
+          <div style="flex:1;height:54px;border-radius:8px;background:var(--accent-h);display:flex;align-items:flex-end;padding:7px;color:#fff;font-size:10.5px;font-weight:600">hover</div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px">
+          <div style="display:flex;align-items:center;gap:8px"><span style="width:11px;height:11px;border-radius:50%;background:var(--st-queued)"></span><span style="font-size:12px">Queued</span></div>
+          <div style="display:flex;align-items:center;gap:8px"><span style="width:11px;height:11px;border-radius:50%;background:var(--st-conv)"></span><span style="font-size:12px">Converting</span></div>
+          <div style="display:flex;align-items:center;gap:8px"><span style="width:11px;height:11px;border-radius:50%;background:var(--st-done)"></span><span style="font-size:12px">Done</span></div>
+          <div style="display:flex;align-items:center;gap:8px"><span style="width:11px;height:11px;border-radius:50%;background:var(--st-fail)"></span><span style="font-size:12px">Failed / No text</span></div>
+        </div>
+      </div>
+
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px">
+        <div style="font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin-bottom:14px">Typography</div>
+        <div style="font-size:20px;font-weight:600;letter-spacing:-.01em;margin-bottom:4px">Maturity overview</div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:14px">Title · 20px / 600 · system sans</div>
+        <div style="font-size:14px;margin-bottom:4px">Body text and control labels sit at fourteen pixels.</div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:14px">Body · 14px / 400–500</div>
+        <div style="font-family:var(--mono);font-size:12.5px;margin-bottom:4px">~/Documents/report.docx</div>
+        <div style="font-size:11px;color:var(--muted)">Mono · paths, log, figures</div>
+      </div>
+
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px">
+        <div style="font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin-bottom:14px">Status system · signature</div>
+        <div style="display:flex;flex-direction:column;gap:11px">
+          <div style="display:flex;align-items:center;gap:8px"><span style="width:8px;height:8px;border-radius:50%;background:var(--st-queued);box-shadow:0 0 0 3px color-mix(in srgb,var(--st-queued) 26%,transparent)"></span><span style="font-size:12.5px;font-weight:600">Queued</span></div>
+          <div style="display:flex;align-items:center;gap:8px"><span style="width:8px;height:8px;border-radius:50%;background:var(--st-conv);box-shadow:0 0 0 3px color-mix(in srgb,var(--st-conv) 26%,transparent);animation:pcpulse 1.1s ease-in-out infinite"></span><span style="font-size:12.5px;font-weight:600">Converting</span></div>
+          <div style="display:flex;align-items:center;gap:8px"><span style="width:8px;height:8px;border-radius:50%;background:var(--st-done);box-shadow:0 0 0 3px color-mix(in srgb,var(--st-done) 26%,transparent)"></span><span style="font-size:12.5px;font-weight:600">Done</span></div>
+          <div style="display:flex;align-items:center;gap:8px"><span style="width:8px;height:8px;border-radius:50%;background:var(--st-fail);box-shadow:0 0 0 3px color-mix(in srgb,var(--st-fail) 26%,transparent)"></span><span style="font-size:12.5px;font-weight:600">No text · scanned</span></div>
+        </div>
+      </div>
+
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px">
+        <div style="font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin-bottom:14px">Buttons</div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px">
+          <span style="display:inline-flex;align-items:center;height:34px;padding:0 14px;border-radius:7px;background:var(--accent);color:#fff;font-size:13px;font-weight:600">Convert</span>
+          <span style="display:inline-flex;align-items:center;height:34px;padding:0 14px;border-radius:7px;background:transparent;border:1px solid var(--border);color:var(--text);font-size:13px;font-weight:600">Add files</span>
+          <span style="display:inline-flex;align-items:center;height:34px;padding:0 14px;border-radius:7px;background:transparent;color:var(--muted);font-size:13px;font-weight:600">Clear</span>
+          <span style="display:inline-flex;align-items:center;height:34px;padding:0 14px;border-radius:7px;background:transparent;border:1px solid var(--border);color:var(--st-fail);font-size:13px;font-weight:600">Remove</span>
+        </div>
+      </div>
+
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px">
+        <div style="font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin-bottom:14px">Controls</div>
+        <div style="display:flex;align-items:center;gap:2px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:3px;width:max-content;margin-bottom:14px">
+          <span style="display:inline-flex;align-items:center;height:30px;padding:0 12px;border-radius:6px;background:var(--accent-soft);color:var(--accent);font-size:12.5px;font-weight:600">DOCX</span>
+          <span style="display:inline-flex;align-items:center;height:30px;padding:0 12px;border-radius:6px;color:var(--muted);font-size:12.5px;font-weight:600">Markdown</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px"><span style="width:17px;height:17px;border-radius:4px;background:var(--accent);display:flex;align-items:center;justify-content:center"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span style="font-size:12.5px">Overwrite existing</span></div>
+        <div style="height:8px;border-radius:999px;background:var(--inset);overflow:hidden"><div style="height:100%;width:64%;background:var(--accent);border-radius:999px"></div></div>
+      </div>
+
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- ============ FORMAT OPTIONS VIEW ============ -->
+  <sc-if value="{{ isFormats }}" hint-placeholder-val="{{ false }}">
+  <div style="min-width:100%;width:max-content;min-height:100vh;box-sizing:border-box;padding:88px 48px 60px;background:var(--desk)">
+    <div style="margin-bottom:6px;font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)">Explorations</div>
+    <h1 style="margin:0 0 28px;font-size:24px;font-weight:600;letter-spacing:-.02em;color:var(--text)">Choosing DOCX vs Markdown — three patterns</h1>
+    <div style="display:flex;gap:32px;align-items:flex-start">
+
+      <div style="flex:none;width:380px">
+        <div style="font-size:12.5px;font-weight:600;color:var(--text);margin-bottom:3px">A · Global segmented toggle</div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:12px">One format for the whole batch — simplest, fewest decisions.</div>
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;box-shadow:var(--shadow);overflow:hidden">
+          <div style="display:flex;align-items:center;gap:8px;padding:13px 16px;border-bottom:1px solid var(--border-soft)">
+            <span style="display:inline-flex;align-items:center;height:32px;padding:0 13px;border-radius:7px;background:var(--accent);color:#fff;font-size:12.5px;font-weight:600">Convert</span>
+            <span style="display:inline-flex;align-items:center;height:32px;padding:0 13px;border-radius:7px;border:1px solid var(--border);color:var(--text);font-size:12.5px;font-weight:600">Add files</span>
+            <div style="margin-left:auto;display:flex;gap:2px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:3px">
+              <span style="display:inline-flex;align-items:center;height:28px;padding:0 11px;border-radius:6px;background:var(--accent-soft);color:var(--accent);font-size:12px;font-weight:600">DOCX</span>
+              <span style="display:inline-flex;align-items:center;height:28px;padding:0 11px;border-radius:6px;color:var(--muted);font-size:12px;font-weight:600">MD</span>
+            </div>
+          </div>
+          <div style="padding:13px 16px;display:flex;flex-direction:column;gap:11px">
+            <div style="display:flex;align-items:center;gap:10px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="1.6"><path d="M14 3v4a1 1 0 0 0 1 1h4"></path><path d="M14 3H7a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V8z"></path></svg><span style="font-size:12.5px;flex:1">report.pdf</span><span style="font-size:10.5px;font-weight:700;color:var(--muted);border:1px solid var(--border);border-radius:4px;padding:1px 6px">DOCX</span></div>
+            <div style="display:flex;align-items:center;gap:10px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="1.6"><path d="M14 3v4a1 1 0 0 0 1 1h4"></path><path d="M14 3H7a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V8z"></path></svg><span style="font-size:12.5px;flex:1">notes.pdf</span><span style="font-size:10.5px;font-weight:700;color:var(--muted);border:1px solid var(--border);border-radius:4px;padding:1px 6px">DOCX</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div style="flex:none;width:380px">
+        <div style="font-size:12.5px;font-weight:600;color:var(--text);margin-bottom:3px">B · Per-file picker</div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:12px">Each row sets its own format — most control, more clicks.</div>
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;box-shadow:var(--shadow);overflow:hidden">
+          <div style="padding:13px 16px;display:flex;flex-direction:column;gap:13px">
+            <div style="display:flex;align-items:center;gap:10px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="1.6"><path d="M14 3v4a1 1 0 0 0 1 1h4"></path><path d="M14 3H7a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V8z"></path></svg><span style="font-size:12.5px;flex:1">report.pdf</span><span style="display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:600;color:var(--text);border:1px solid var(--border);border-radius:6px;padding:4px 8px">DOCX <span style="color:var(--muted)">▾</span></span></div>
+            <div style="display:flex;align-items:center;gap:10px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="1.6"><path d="M14 3v4a1 1 0 0 0 1 1h4"></path><path d="M14 3H7a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V8z"></path></svg><span style="font-size:12.5px;flex:1">readme.pdf</span><span style="display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:600;color:var(--accent);border:1px solid var(--accent);border-radius:6px;padding:4px 8px">Markdown <span style="color:var(--accent)">▾</span></span></div>
+            <div style="display:flex;align-items:center;gap:10px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="1.6"><path d="M14 3v4a1 1 0 0 0 1 1h4"></path><path d="M14 3H7a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V8z"></path></svg><span style="font-size:12.5px;flex:1">spec.pdf</span><span style="display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:600;color:var(--text);border:1px solid var(--border);border-radius:6px;padding:4px 8px">DOCX <span style="color:var(--muted)">▾</span></span></div>
+          </div>
+        </div>
+      </div>
+
+      <div style="flex:none;width:380px">
+        <div style="font-size:12.5px;font-weight:600;color:var(--text);margin-bottom:3px">C · Global default + override</div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:12px">Set one default; override individual rows only when needed.</div>
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;box-shadow:var(--shadow);overflow:hidden">
+          <div style="display:flex;align-items:center;gap:9px;padding:11px 16px;border-bottom:1px solid var(--border-soft);background:var(--bg)">
+            <span style="font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)">Default</span>
+            <div style="display:flex;gap:2px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:3px">
+              <span style="display:inline-flex;align-items:center;height:26px;padding:0 11px;border-radius:6px;background:var(--accent-soft);color:var(--accent);font-size:12px;font-weight:600">DOCX</span>
+              <span style="display:inline-flex;align-items:center;height:26px;padding:0 11px;border-radius:6px;color:var(--muted);font-size:12px;font-weight:600">MD</span>
+            </div>
+          </div>
+          <div style="padding:13px 16px;display:flex;flex-direction:column;gap:12px">
+            <div style="display:flex;align-items:center;gap:10px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="1.6"><path d="M14 3v4a1 1 0 0 0 1 1h4"></path><path d="M14 3H7a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V8z"></path></svg><span style="font-size:12.5px;flex:1">report.pdf</span><span style="font-size:11px;color:var(--muted)">DOCX · default</span></div>
+            <div style="display:flex;align-items:center;gap:10px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="1.6"><path d="M14 3v4a1 1 0 0 0 1 1h4"></path><path d="M14 3H7a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V8z"></path></svg><span style="font-size:12.5px;flex:1">readme.pdf</span><span style="display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:var(--accent);background:var(--accent-soft);border-radius:5px;padding:3px 8px">Markdown <svg width="10" height="10" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg></span></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- toast -->
+  <sc-if value="{{ toastShow }}" hint-placeholder-val="{{ false }}">
+  <div style="position:fixed;bottom:28px;left:50%;transform:translateX(-50%);z-index:80;display:flex;align-items:center;gap:9px;background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:11px 16px;box-shadow:var(--shadow);font-size:13px;font-weight:500;animation:pcrise .25s ease-out">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h3.5l2 2H19a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>{{ toast }}
+  </div>
+  </sc-if>
+
+  <!-- settings drawer -->
+  <sc-if value="{{ settingsOpen }}" hint-placeholder-val="{{ false }}">
+  <div style="position:fixed;inset:0;z-index:88;display:flex;align-items:center;justify-content:center;padding:74px 24px 36px" onClick="{{ onCloseSettings }}">
+    <div style="position:relative;width:100%;max-width:980px;height:min(80vh,724px);min-height:580px;border-radius:14px;overflow:hidden;display:flex;justify-content:flex-end;background:rgba(2,6,16,.45)">
+    <div onClick="{{ stop }}" style="width:380px;max-width:86%;height:100%;overflow:auto;background:var(--surface);border-left:1px solid var(--border);box-shadow:-12px 0 32px -16px rgba(0,0,0,.5);animation:pcrise .22s ease-out">
+      <div style="display:flex;align-items:center;gap:10px;padding:17px 20px;border-bottom:1px solid var(--border-soft);position:sticky;top:0;background:var(--surface);z-index:1">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 8 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H2a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 3.6 8a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H8a1.65 1.65 0 0 0 1-1.51V2a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V8a1.65 1.65 0 0 0 1.51 1H22a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+        <div style="font-size:15px;font-weight:600">Settings</div>
+        <button onClick="{{ onCloseSettings }}" aria-label="Close" style="margin-left:auto;display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:6px;border:none;background:transparent;color:var(--muted);cursor:pointer"><svg width="15" height="15" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg></button>
+      </div>
+      <div style="padding:4px 20px 28px">
+
+        <div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:20px 0 12px">Conversion</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+          <div><div style="font-size:13px;font-weight:500">Parallel workers</div><div style="font-size:11.5px;color:var(--muted);margin-top:2px">Caps concurrent conversions · default CPU − 1</div></div>
+          <div style="display:flex;align-items:center;border:1px solid var(--border);border-radius:7px;overflow:hidden;flex:none">
+            <button onClick="{{ onWorkersDown }}" aria-label="Fewer workers" style="width:30px;height:30px;border:none;background:transparent;color:var(--text);font-size:17px;cursor:pointer">−</button>
+            <span style="min-width:30px;text-align:center;font-size:13px;font-weight:600">{{ workers }}</span>
+            <button onClick="{{ onWorkersUp }}" aria-label="More workers" style="width:30px;height:30px;border:none;background:transparent;color:var(--text);font-size:17px;cursor:pointer">+</button>
+          </div>
+        </div>
+
+        <div style="height:1px;background:var(--border-soft);margin:18px 0"></div>
+        <div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:0 0 12px">Output filenames</div>
+        <div style="display:flex;gap:10px">
+          <div style="flex:1"><div style="font-size:11.5px;color:var(--muted);margin-bottom:5px">Prefix</div><input value="{{ prefix }}" onChange="{{ onPrefix }}" placeholder="e.g. conv_" style="width:100%;height:32px;padding:0 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);font-size:12.5px" /></div>
+          <div style="flex:1"><div style="font-size:11.5px;color:var(--muted);margin-bottom:5px">Suffix</div><input value="{{ suffix }}" onChange="{{ onSuffix }}" placeholder="e.g. _v1" style="width:100%;height:32px;padding:0 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);font-size:12.5px" /></div>
+        </div>
+        <div style="font-size:11.5px;color:var(--muted);margin-top:9px;font-family:var(--mono)">report.pdf → {{ namePreview }}</div>
+        <button onClick="{{ onMirror }}" style="display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;border:none;background:transparent;cursor:pointer;padding:14px 0 4px;text-align:left">
+          <div><div style="font-size:13px;font-weight:500;color:var(--text)">Mirror source subfolders</div><div style="font-size:11.5px;color:var(--muted);margin-top:2px">Recreate the folder tree under the output folder</div></div>
+          <span style="width:34px;height:20px;flex:none;border-radius:999px;background:{{ mirTrack }};position:relative;transition:background .15s"><span style="position:absolute;top:2px;left:{{ mirKnob }};width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.3);transition:left .15s"></span></span>
+        </button>
+
+        <div style="height:1px;background:var(--border-soft);margin:18px 0"></div>
+        <div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:0 0 4px">Notifications</div>
+        <button onClick="{{ onNotify }}" style="display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;border:none;background:transparent;cursor:pointer;padding:10px 0;text-align:left">
+          <div><div style="font-size:13px;font-weight:500;color:var(--text)">Notify when a batch completes</div><div style="font-size:11.5px;color:var(--muted);margin-top:2px">Desktop toast on Windows / Linux</div></div>
+          <span style="width:34px;height:20px;flex:none;border-radius:999px;background:{{ ntfTrack }};position:relative;transition:background .15s"><span style="position:absolute;top:2px;left:{{ ntfKnob }};width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.3);transition:left .15s"></span></span>
+        </button>
+
+        <div style="height:1px;background:var(--border-soft);margin:18px 0"></div>
+        <div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:0 0 8px">Audit log</div>
+        <div style="font-size:11.5px;color:var(--muted);margin-bottom:10px;line-height:1.5">Every run is appended: timestamp, source, destination, status, duration.</div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="flex:1;min-width:0;font-family:var(--mono);font-size:11.5px;color:var(--text);background:var(--bg);border:1px solid var(--border-soft);border-radius:6px;padding:7px 9px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ auditPath }}</span>
+          <button onClick="{{ onAudit }}" style="flex:none;height:32px;padding:0 13px;border-radius:7px;border:1px solid var(--border);background:transparent;color:var(--text);font-size:12.5px;font-weight:600;cursor:pointer">Open</button>
+        </div>
+
+        <div style="height:1px;background:var(--border-soft);margin:18px 0"></div>
+        <button onClick="{{ onRemember }}" style="display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;border:none;background:transparent;cursor:pointer;padding:4px 0;text-align:left">
+          <div><div style="font-size:13px;font-weight:500;color:var(--text)">Remember folders &amp; preferences</div><div style="font-size:11.5px;color:var(--muted);margin-top:2px">Persist settings between sessions</div></div>
+          <span style="width:34px;height:20px;flex:none;border-radius:999px;background:{{ remTrack }};position:relative;transition:background .15s"><span style="position:absolute;top:2px;left:{{ remKnob }};width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.3);transition:left .15s"></span></span>
+        </button>
+
+      </div>
+      <div style="position:sticky;bottom:0;display:flex;justify-content:flex-end;gap:8px;padding:12px 20px;border-top:1px solid var(--border-soft);background:var(--surface)">
+        <button onClick="{{ onCloseSettings }}" style="height:34px;padding:0 18px;border-radius:7px;border:none;background:var(--accent);color:#fff;font-size:13px;font-weight:600;cursor:pointer">Done</button>
+      </div>
+    </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- unlock dialog -->
+  <sc-if value="{{ unlockShow }}" hint-placeholder-val="{{ false }}">
+  <div style="position:fixed;inset:0;z-index:90;background:rgba(2,6,16,.55);display:flex;align-items:center;justify-content:center;padding:24px" onClick="{{ onUnlockCancel }}">
+    <div onClick="{{ stop }}" style="width:380px;background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow);padding:22px;animation:pcrise .22s ease-out">
+      <div style="display:flex;align-items:center;gap:11px;margin-bottom:6px">
+        <div style="width:30px;height:30px;border-radius:8px;background:var(--accent-soft);color:var(--accent);display:flex;align-items:center;justify-content:center;flex:none"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0"></path></svg></div>
+        <div style="font-size:15px;font-weight:600">Password required</div>
+      </div>
+      <p style="margin:0 0 16px;font-size:13px;color:var(--muted);line-height:1.5"><span style="font-family:var(--mono);color:var(--text)">{{ unlockName }}</span> is encrypted. Enter its password to decrypt and convert it.</p>
+      <input value="{{ unlockPw }}" onChange="{{ onPw }}" type="password" placeholder="Document password" style="width:100%;height:36px;padding:0 12px;border:1px solid var(--border);border-radius:7px;background:var(--bg);color:var(--text);font-size:13px;margin-bottom:8px" />
+      <sc-if value="{{ hasUnlockError }}" hint-placeholder-val="{{ false }}"><div style="font-size:12px;color:var(--st-fail);margin-bottom:8px">{{ unlockError }}</div></sc-if>
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:8px">
+        <button onClick="{{ onUnlockCancel }}" style="height:34px;padding:0 14px;border-radius:7px;border:1px solid var(--border);background:transparent;color:var(--text);font-size:13px;font-weight:600;cursor:pointer">Cancel</button>
+        <button onClick="{{ onUnlockSubmit }}" style="height:34px;padding:0 14px;border-radius:7px;border:none;background:var(--accent);color:#fff;font-size:13px;font-weight:600;cursor:pointer">Unlock &amp; convert</button>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1160,&quot;height&quot;:760},&quot;accent&quot;:{&quot;editor&quot;:&quot;color&quot;,&quot;default&quot;:&quot;#6366F1&quot;,&quot;options&quot;:[&quot;#6366F1&quot;,&quot;#7C3AED&quot;,&quot;#0EA5E9&quot;,&quot;#10B981&quot;],&quot;tsType&quot;:&quot;string&quot;},&quot;defaultTheme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;dark&quot;,&quot;options&quot;:[&quot;dark&quot;,&quot;light&quot;],&quot;tsType&quot;:&quot;string&quot;},&quot;windowChrome&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;}}">
+class Component extends DCLogic {
+  state = {
+    theme: null, view: 'app', format: 'docx',
+    files: [], sel: {}, running: false, summary: null,
+    logOpen: false, log: [], outputReady: false,
+    outMode: 'next', overwrite: false, pStart: '', pEnd: '',
+    unlockId: null, unlockPw: '', unlockError: '', toast: null, pulse: 0,
+    ocr: false, dragOver: false, flash: {},
+    workers: 7, prefix: '', suffix: '', mirror: false, notify: true, remember: true, settingsOpen: false
+  };
+  _id = 1; _pool = 0; _iv = null; _toastT = null; _order = null;
+
+  STATUS = {
+    queued: { c: 'var(--st-queued)', l: 'Queued' },
+    converting: { c: 'var(--st-conv)', l: 'Converting' },
+    scanning: { c: 'var(--st-conv)', l: 'Scanning…' },
+    done: { c: 'var(--st-done)', l: 'Done' },
+    notext: { c: 'var(--st-fail)', l: 'No text' },
+    failed: { c: 'var(--st-fail)', l: 'Failed' },
+    encrypted: { c: 'var(--st-conv)', l: 'Locked' }
+  };
+
+  componentDidMount() {
+    let patch = {};
+    try { const raw = localStorage.getItem('pdfconv:settings'); if (raw) { const v = JSON.parse(raw); if (v && v.remember !== false) patch = v; } } catch (e) {}
+    this.setState({ files: this.state.files.length ? this.state.files : this._seed(), ...patch });
+  }
+  _persist() {
+    const s = this.state, keys = ['theme', 'workers', 'prefix', 'suffix', 'mirror', 'notify', 'remember', 'ocr', 'format', 'outMode', 'overwrite'];
+    const o = {}; keys.forEach(n => o[n] = s[n]);
+    try { if (o.remember !== false) localStorage.setItem('pdfconv:settings', JSON.stringify(o)); } catch (e) {}
+  }
+  setS(patch) { this.setState(patch, () => this._persist()); }
+  toast(msg) { clearTimeout(this._toastT); this.setState({ toast: msg }); this._toastT = setTimeout(() => this.setState({ toast: null }), 2400); }
+  componentWillUnmount() { clearInterval(this._iv); clearTimeout(this._toastT); }
+
+  _mk(o) { return { id: this._id++, status: 'queued', progress: 0, ...o }; }
+  _seed() {
+    return [
+      { name: 'quarterly-report.pdf', dir: '~/Documents', pages: 12, fate: 'done' },
+      { name: 'q3-financials.pdf', dir: '~/Documents', pages: 28, fate: 'done' },
+      { name: 'invoice_scan.pdf', dir: '~/Documents/Scans', pages: 3, fate: 'notext' },
+      { name: 'master-services-agreement.pdf', dir: '~/Contracts', pages: 40, fate: 'done' },
+      { name: 'board-minutes.pdf', dir: '~/Documents', pages: 6, fate: 'done', dup: true },
+      { name: 'payroll-export.pdf', dir: '~/HR', pages: 9, fate: 'encrypted' },
+      { name: 'damaged-form.pdf', dir: '~/Downloads', pages: 2, fate: 'failed' },
+      { name: 'employee-handbook.pdf', dir: '~/HR', pages: 64, fate: 'done' }
+    ].map(o => this._mk(o));
+  }
+  _addPool() {
+    return [
+      { name: 'proposal-final.pdf', dir: '~/Documents', pages: 9, fate: 'done' },
+      { name: 'expense-report.pdf', dir: '~/Documents', pages: 5, fate: 'done' },
+      { name: 'receipt-scan.pdf', dir: '~/Scans', pages: 1, fate: 'notext' },
+      { name: 'vendor-contract.pdf', dir: '~/Contracts', pages: 22, fate: 'done' },
+      { name: 'budget-2026.pdf', dir: '~/Finance', pages: 14, fate: 'done' }
+    ];
+  }
+  _commit() { this.setState(s => ({ pulse: s.pulse + 1 })); }
+  log(text, kind) {
+    const t = new Date().toLocaleTimeString('en-GB', { hour12: false });
+    this.state.log.push({ text, kind: kind || 'info', t });
+    if (this.state.log.length > 240) this.state.log.shift();
+  }
+
+  toggleTheme() { const t = (this.state.theme || this.props.defaultTheme || 'dark') === 'dark' ? 'light' : 'dark'; this.setS({ theme: t }); }
+  setView(v) { this.setState({ view: v }); }
+  setFormat(f) { this.setS({ format: f }); }
+  setOutMode(m) { this.setS({ outMode: m }); }
+  toggleOverwrite() { this.setS({ overwrite: !this.state.overwrite }); }
+  setStart(e) { this.setState({ pStart: (e.target.value || '').replace(/[^0-9]/g, '') }); }
+  setEnd(e) { this.setState({ pEnd: (e.target.value || '').replace(/[^0-9]/g, '') }); }
+  setWorkers(n) { this.setS({ workers: Math.max(1, Math.min(8, n)) }); }
+  setPrefix(e) { this.setS({ prefix: (e.target.value || '').replace(/[^\w.\- ]/g, '') }); }
+  setSuffix(e) { this.setS({ suffix: (e.target.value || '').replace(/[^\w.\- ]/g, '') }); }
+  toggleMirror() { this.setS({ mirror: !this.state.mirror }); }
+  toggleNotify() { this.setS({ notify: !this.state.notify }); }
+  toggleRemember() { const r = !this.state.remember; this.setState({ remember: r }, () => { if (!r) { try { localStorage.removeItem('pdfconv:settings'); } catch (e) {} } else this._persist(); }); }
+  openSettings() { this.setState({ settingsOpen: true }); }
+  closeSettings() { this.setState({ settingsOpen: false }); }
+  openAudit() { this.toast('Opening audit log — pdfconv-audit.csv'); }
+  _outName(f, fmt) { const base = f.name.replace(/\.pdf$/i, ''); const ext = fmt === 'docx' ? '.docx' : '.md'; return (this.state.prefix || '') + base + (this.state.suffix || '') + ext; }
+  workerCount() { return Math.max(1, Math.min(8, this.state.workers || 1)); }
+  pageErr() { const a = this.state.pStart, b = this.state.pEnd; return !!(a !== '' && b !== '' && parseInt(a, 10) > parseInt(b, 10)); }
+
+  addFiles() {
+    if (this.state.running) return;
+    const P = this._addPool();
+    const a = P[this._pool % P.length], b = P[(this._pool + 1) % P.length];
+    this._pool += 2;
+    this.setState(s => ({ files: [...s.files, this._mk({ ...a }), this._mk({ ...b })] }));
+  }
+  addFolder() {
+    if (this.state.running) return;
+    const B = [
+      { name: 'kickoff-deck.pdf', dir: '~/Projects/Atlas', pages: 18, fate: 'done' },
+      { name: 'requirements.pdf', dir: '~/Projects/Atlas', pages: 11, fate: 'done' },
+      { name: 'old-scan-notes.pdf', dir: '~/Projects/Atlas/Archive', pages: 4, fate: 'notext' },
+      { name: 'signed-sow.pdf', dir: '~/Projects/Atlas', pages: 7, fate: 'done' },
+      { name: 'appendix.pdf', dir: '~/Projects/Atlas', pages: 33, fate: 'done' }
+    ];
+    this.setState(s => ({ files: [...s.files, ...B.map(o => this._mk(o))] }));
+  }
+  clearAll() { if (this.state.running) return; this.setState({ files: [], sel: {}, summary: null, outputReady: false }); }
+  removeOne(id) {
+    if (this.state.running) return;
+    this.setState(s => { const sel = { ...s.sel }; delete sel[id]; return { files: s.files.filter(f => f.id !== id), sel }; });
+  }
+  removeSelected() { if (this.state.running) return; this.setState(s => ({ files: s.files.filter(f => !s.sel[f.id]), sel: {} })); }
+  toggleSel(id) { this.setState(s => { const sel = { ...s.sel }; if (sel[id]) delete sel[id]; else sel[id] = true; return { sel }; }); }
+  toggleAll() {
+    this.setState(s => {
+      const all = s.files.length && s.files.every(f => s.sel[f.id]);
+      if (all) return { sel: {} };
+      const sel = {}; s.files.forEach(f => sel[f.id] = true); return { sel };
+    });
+  }
+
+  convert(only) {
+    if (this.state.running) return;
+    const files = this.state.files;
+    if (!files.length) return;
+    if (this.pageErr()) { this.toast('Fix the page range — start must be ≤ end.'); return; }
+    const order = only ? files.filter(f => only.indexOf(f.id) >= 0) : files.slice();
+    if (!order.length) return;
+    const fmt = this.state.format;
+    order.forEach(f => { f.status = 'queued'; f.progress = 0; delete f._scan; delete f._ocr; f.out = this._outName(f, fmt); });
+    this._order = order; this._next = 0;
+    this.log('Starting conversion of ' + order.length + ' file' + (order.length > 1 ? 's' : '') + ' → ' + (fmt === 'docx' ? 'DOCX' : 'Markdown') + ' · ' + this.workerCount() + ' workers…', 'info');
+    this.setState({ running: true, summary: null, logOpen: true, outputReady: false, sel: {} });
+    clearInterval(this._iv);
+    this._iv = setInterval(() => this.tick(), 90);
+  }
+  tick() {
+    const order = this._order;
+    if (!order) return;
+    let active = order.filter(f => f.status === 'converting' || f.status === 'scanning');
+    while (active.length < this.workerCount() && this._next < order.length) {
+      const f = order[this._next++];
+      if (f.status !== 'queued') continue;
+      if (f.fate === 'encrypted') { f.status = 'encrypted'; this.log(f.name + ' is encrypted (password protected). Unlock to convert.', 'warn'); continue; }
+      if (f.fate === 'notext' && !this.state.ocr) { f.status = 'scanning'; f._scan = 0; active.push(f); continue; }
+      f.status = 'converting'; f.progress = 0;
+      if (f.fate === 'notext') { f._ocr = true; this.log('Running OCR on ' + f.name + '…', 'info'); }
+      else this.log('Converting ' + f.name + '…', 'info');
+      active.push(f);
+    }
+    active.forEach(f => {
+      if (f.status === 'scanning') { f._scan = (f._scan || 0) + 1; if (f._scan >= 3) { f.status = 'notext'; this.log(f.name + ' has no text layer (scanned image). Enable OCR or use a text-based PDF.', 'err'); } return; }
+      if (f.status === 'converting') {
+        const dur = Math.min(Math.max(f.pages * 0.7, 7), 20);
+        f.progress = Math.min(100, f.progress + 100 / dur);
+        if (f.fate === 'failed' && f.progress >= 55) { f.status = 'failed'; f.progress = 0; this.log(f.name + ' could not be parsed (damaged or invalid PDF). Skipped — batch continues.', 'err'); return; }
+        if (f.progress >= 100) { f.status = 'done'; f.progress = 100; this._finalizeDone(f); }
+      }
+    });
+    const busy = order.some(f => f.status === 'queued' || f.status === 'converting' || f.status === 'scanning');
+    this._commit();
+    if (!busy && this._next >= order.length) this.finish();
+  }
+  _finalizeDone(f) {
+    const sub = (this.state.outMode === 'choose' && this.state.mirror && /\//.test(f.dir || '')) ? (f.dir.replace(/^~\/?/, '') + '/') : '';
+    if (!this.state.overwrite && f.dup) {
+      const renamed = f.out.replace(/(\.[a-z]+)$/i, ' (1)$1');
+      this.log((f._ocr ? 'OCR complete — ' : 'Converted ') + f.name + ' — ' + f.out + ' exists, saved as ' + sub + renamed, 'ok');
+    } else {
+      this.log((f._ocr ? 'OCR complete — converted ' : 'Converted ') + f.name + ' → ' + sub + f.out + (this.state.overwrite && f.dup ? ' (overwritten)' : ''), 'ok');
+    }
+    this.flashRow(f.id);
+  }
+  finish() {
+    clearInterval(this._iv); this._iv = null;
+    const o = this._order || [];
+    const ok = o.filter(f => f.status === 'done').length;
+    const fail = o.filter(f => f.status === 'failed').length;
+    const skip = o.filter(f => f.status === 'notext' || f.status === 'encrypted').length;
+    this.log('Run complete — ' + ok + ' succeeded · ' + fail + ' failed · ' + skip + ' skipped. Appended to audit log.', fail ? 'warn' : 'ok');
+    this.setState({ running: false, outputReady: ok > 0, summary: { ok, fail, skip } });
+    if (this.state.notify) this.toast('Conversion complete — ' + ok + ' succeeded' + (fail ? ', ' + fail + ' failed' : ''));
+  }
+  cancel() {
+    if (!this.state.running) return;
+    clearInterval(this._iv); this._iv = null;
+    (this._order || []).forEach(f => { if (f.status === 'converting' || f.status === 'scanning') { f.status = 'queued'; f.progress = 0; } });
+    this.log('Cancelled. No partial files were written.', 'warn');
+    const ok = (this._order || []).filter(f => f.status === 'done').length;
+    this.setState({ running: false, outputReady: ok > 0 });
+  }
+  retryFailed() { const ids = this.state.files.filter(f => f.status === 'failed').map(f => f.id); if (ids.length) this.convert(ids); }
+
+  openUnlock(id) { if (this.state.running) return; this.setState({ unlockId: id, unlockPw: '', unlockError: '' }); }
+  closeUnlock() { this.setState({ unlockId: null, unlockPw: '', unlockError: '' }); }
+  setPw(e) { this.setState({ unlockPw: e.target.value, unlockError: '' }); }
+  submitUnlock() {
+    const pw = (this.state.unlockPw || '').trim();
+    if (!pw) { this.setState({ unlockError: 'Enter the password to continue.' }); return; }
+    const id = this.state.unlockId;
+    const f = this.state.files.find(x => x.id === id);
+    if (f) { f.fate = 'done'; this.log('Unlocked ' + f.name + '. Converting…', 'ok'); }
+    this.setState({ unlockId: null, unlockPw: '', unlockError: '' });
+    this.convert([id]);
+  }
+  openOutput() { this.toast('Opening output folder…'); }
+  toggleLog() { this.setState(s => ({ logOpen: !s.logOpen })); }
+  toggleOcr() { this.setS({ ocr: !this.state.ocr }); }
+  onDragOver(e) { e.preventDefault(); if (!this.state.dragOver) this.setState({ dragOver: true }); }
+  onDragLeave(e) { e.preventDefault(); this.setState({ dragOver: false }); }
+  onDrop(e) { e.preventDefault(); this.setState({ dragOver: false }); if (!this.state.running) this.addFiles(); }
+  flashRow(id) { this.setState(s => ({ flash: { ...s.flash, [id]: true } })); setTimeout(() => { this.setState(s => { const flash = { ...s.flash }; delete flash[id]; return { flash }; }); }, 800); }
+
+  btn(variant, enabled) {
+    const b = { display: 'inline-flex', alignItems: 'center', gap: '7px', height: '34px', padding: '0 14px', borderRadius: '7px', fontSize: '13px', fontWeight: 600, cursor: enabled ? 'pointer' : 'default', userSelect: 'none', whiteSpace: 'nowrap', border: '1px solid transparent', transition: 'background .15s,opacity .15s', opacity: enabled ? 1 : .4, pointerEvents: enabled ? 'auto' : 'none' };
+    if (variant === 'primary') { b.background = 'var(--accent)'; b.color = '#fff'; }
+    if (variant === 'secondary') { b.background = 'transparent'; b.color = 'var(--text)'; b.borderColor = 'var(--border)'; }
+    if (variant === 'ghost') { b.background = 'transparent'; b.color = 'var(--muted)'; }
+    return b;
+  }
+  seg(active) {
+    return { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px', height: '30px', padding: '0 12px', borderRadius: '6px', fontSize: '12.5px', fontWeight: 600, cursor: 'pointer', userSelect: 'none', border: 'none', whiteSpace: 'nowrap', background: active ? 'var(--accent-soft)' : 'transparent', color: active ? 'var(--accent)' : 'var(--muted)' };
+  }
+  nav(active) {
+    return { height: '30px', padding: '0 14px', borderRadius: '999px', fontSize: '12.5px', fontWeight: 600, cursor: 'pointer', border: 'none', whiteSpace: 'nowrap', background: active ? 'var(--accent)' : 'transparent', color: active ? '#fff' : 'var(--muted)' };
+  }
+
+  renderVals() {
+    const s = this.state, P = this.props;
+    const theme = s.theme || P.defaultTheme || 'dark';
+    const isDark = theme === 'dark';
+    const accent = P.accent || '#6366F1';
+    const rootStyle = '--accent:' + accent + ';--accent-h:color-mix(in srgb,' + accent + ',#000 16%)';
+    const files = s.files, STATUS = this.STATUS, sel = s.sel;
+    const halo = c => 'color-mix(in srgb,' + c + ' 26%,transparent)';
+    const rows = files.map(f => {
+      const sm = STATUS[f.status] || STATUS.queued;
+      return {
+        id: f.id, name: f.name, dir: f.dir, pages: f.pages + ' pp',
+        fmt: s.format === 'docx' ? 'DOCX' : 'MD',
+        color: sm.c, halo: halo(sm.c), statusLabel: sm.l,
+        anim: (f.status === 'converting' || f.status === 'scanning') ? 'pcpulse 1.1s ease-in-out infinite' : 'none',
+        showBar: f.status === 'converting', pct: Math.round(f.progress) + '%',
+        showUnlock: f.status === 'encrypted',
+        rail: f.status === 'converting' ? 'inset 2px 0 0 var(--st-conv)' : 'none',
+        flashAnim: s.flash[f.id] ? 'pcflash .8s ease-out' : 'none',
+        selected: !!sel[f.id],
+        selBg: sel[f.id] ? 'var(--accent)' : 'transparent',
+        selBorder: sel[f.id] ? 'var(--accent)' : 'var(--border)',
+        onToggle: () => this.toggleSel(f.id), onRemove: () => this.removeOne(f.id), onUnlock: () => this.openUnlock(f.id)
+      };
+    });
+    const order = this._order || [];
+    const running = s.running, summary = s.summary;
+    const conv = order.filter(f => f.status === 'done').length;
+    const total = (running || summary) ? (order.length || files.length) : files.length;
+    const baseConv = (running || summary) ? conv : 0;
+    const frac = order.reduce((a, f) => a + (f.status === 'done' ? 1 : (f.status === 'converting' ? f.progress / 100 : 0)), 0);
+    const pct = ((running || summary) && total ? Math.round(frac / total * 100) : 0) + '%';
+    const statusText = running ? 'Converting…' : (summary ? 'Run complete' : (files.length ? 'Ready' : 'Nothing queued'));
+    const countLabel = (running || summary) ? (baseConv + ' / ' + total + ' converted') : (files.length + ' file' + (files.length === 1 ? '' : 's') + ' queued');
+    const hasFailed = files.some(f => f.status === 'failed');
+    const selCount = files.filter(f => sel[f.id]).length;
+    const allSelected = files.length > 0 && files.every(f => sel[f.id]);
+    const logLines = s.log.map(l => ({ text: '[' + l.t + '] ' + l.text, color: l.kind === 'ok' ? 'var(--st-done)' : l.kind === 'err' ? 'var(--st-fail)' : l.kind === 'warn' ? 'var(--st-conv)' : 'var(--muted)' }));
+    const ufile = files.find(f => f.id === s.unlockId);
+    return {
+      isApp: s.view === 'app', isSystem: s.view === 'system', isFormats: s.view === 'formats',
+      theme, rootStyle, isDark, isLight: !isDark, chrome: P.windowChrome !== false,
+      onApp: () => this.setView('app'), onSys: () => this.setView('system'), onFmt: () => this.setView('formats'),
+      navAppStyle: this.nav(s.view === 'app'), navSysStyle: this.nav(s.view === 'system'), navFmtStyle: this.nav(s.view === 'formats'),
+      onTheme: () => this.toggleTheme(),
+      darkSegBg: isDark ? 'var(--accent-soft)' : 'transparent', darkSegFg: isDark ? 'var(--accent)' : 'var(--muted)',
+      lightSegBg: !isDark ? 'var(--accent-soft)' : 'transparent', lightSegFg: !isDark ? 'var(--accent)' : 'var(--muted)',
+      running, notRunning: !running,
+      convBtn: this.btn('primary', files.length > 0 && !running && !this.pageErr()), onConvert: () => this.convert(),
+      addBtn: this.btn('secondary', !running), onAddFiles: () => this.addFiles(), onAddFolder: () => this.addFolder(),
+      clearBtn: this.btn('ghost', !running && files.length > 0), onClear: () => this.clearAll(),
+      docxStyle: this.seg(s.format === 'docx'), mdStyle: this.seg(s.format === 'md'), onDocx: () => this.setFormat('docx'), onMd: () => this.setFormat('md'),
+      hasFiles: files.length > 0, noFiles: files.length === 0, rows,
+      allSelected, allSelBg: allSelected ? 'var(--accent)' : 'transparent', allSelBorder: allSelected ? 'var(--accent)' : 'var(--border)', onToggleAll: () => this.toggleAll(),
+      selCount, hasSel: selCount > 0, onRemoveSel: () => this.removeSelected(), onDeselect: () => this.setState({ sel: {} }),
+      isChoose: s.outMode === 'choose', outNextStyle: this.seg(s.outMode === 'next'), outChooseStyle: this.seg(s.outMode === 'choose'),
+      onOutNext: () => this.setOutMode('next'), onOutChoose: () => this.setOutMode('choose'), choosePath: '~/Documents/Converted',
+      pStart: s.pStart, pEnd: s.pEnd, onStart: e => this.setStart(e), onEnd: e => this.setEnd(e),
+      pageError: this.pageErr(), pageBorder: this.pageErr() ? 'var(--st-fail)' : 'var(--border)',
+      showMirrorNote: s.outMode === 'choose' && s.mirror, stop: e => e.stopPropagation(),
+      settingsOpen: s.settingsOpen, onSettings: () => this.openSettings(), onCloseSettings: () => this.closeSettings(),
+      workers: s.workers, onWorkersDown: () => this.setWorkers((s.workers || 1) - 1), onWorkersUp: () => this.setWorkers((s.workers || 1) + 1),
+      prefix: s.prefix, suffix: s.suffix, onPrefix: e => this.setPrefix(e), onSuffix: e => this.setSuffix(e),
+      namePreview: (s.prefix || '') + 'report' + (s.suffix || '') + (s.format === 'docx' ? '.docx' : '.md'),
+      mirTrack: s.mirror ? 'var(--accent)' : 'var(--border)', mirKnob: s.mirror ? '16px' : '2px', onMirror: () => this.toggleMirror(),
+      ntfTrack: s.notify ? 'var(--accent)' : 'var(--border)', ntfKnob: s.notify ? '16px' : '2px', onNotify: () => this.toggleNotify(),
+      remTrack: s.remember ? 'var(--accent)' : 'var(--border)', remKnob: s.remember ? '16px' : '2px', onRemember: () => this.toggleRemember(),
+      onAudit: () => this.openAudit(), auditPath: '~/.pdfconverter/audit.csv',
+      overwrite: s.overwrite, ovBg: s.overwrite ? 'var(--accent)' : 'transparent', ovBorder: s.overwrite ? 'var(--accent)' : 'var(--border)', onOverwrite: () => this.toggleOverwrite(),
+      pct, countLabel, statusText,
+      cancelBtn: this.btn('secondary', running), onCancel: () => this.cancel(),
+      retryBtn: this.btn('secondary', !running && hasFailed), onRetry: () => this.retryFailed(),
+      openBtn: this.btn('secondary', s.outputReady && !running), onOpen: () => this.openOutput(),
+      logOpen: s.logOpen, logCaret: s.logOpen ? '90deg' : '0deg', onToggleLog: () => this.toggleLog(), logLines, noLog: logLines.length === 0,
+      showSummary: !!summary, sumOk: summary ? summary.ok : 0, sumFail: summary ? summary.fail : 0, sumSkip: summary ? summary.skip : 0,
+      ocr: s.ocr, ocrBg: s.ocr ? 'var(--accent)' : 'transparent', ocrBorder: s.ocr ? 'var(--accent)' : 'var(--border)', onOcr: () => this.toggleOcr(),
+      dragOver: s.dragOver, onDragOver: e => this.onDragOver(e), onDragLeave: e => this.onDragLeave(e), onDrop: e => this.onDrop(e),
+      toast: s.toast, toastShow: !!s.toast,
+      unlockShow: s.unlockId != null, unlockName: ufile ? ufile.name : '', unlockPw: s.unlockPw, unlockError: s.unlockError, hasUnlockError: !!s.unlockError,
+      onPw: e => this.setPw(e), onUnlockSubmit: () => this.submitUnlock(), onUnlockCancel: () => this.closeUnlock()
+    };
+  }
+}
+</script>
+</body>
+</html>
