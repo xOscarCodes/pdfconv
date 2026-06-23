@@ -754,8 +754,7 @@ class App(ctk.CTk):
         ctk.set_appearance_mode(self.cfg["theme"])
         self.title("PDF Converter")
         self._set_window_icon()
-        self.geometry("900x640")
-        self.minsize(720, 540)
+        self._fit_to_screen()
         self.configure(fg_color=theme.BG)
 
         self.fonts = theme.Fonts()
@@ -816,6 +815,36 @@ class App(ctk.CTk):
                 self.iconphoto(True, self._icon_img)
         except Exception as exc:
             log.debug("window icon not set: %s", exc)
+
+    def _fit_to_screen(self, want_w: int = 900, want_h: int = 640):
+        """Size and centre the window so it always fits the screen.
+
+        customtkinter multiplies the window geometry by the display's DPI scale,
+        so a fixed request (e.g. 900x640) can render far larger (1350x960 at
+        150%) — bigger than a small or high-DPI laptop screen. That pushes the
+        right-anchored settings drawer and the footer off-screen. Clamp the
+        logical size to the available screen and pick a min size that also fits.
+        """
+        self.update_idletasks()
+        try:
+            scaling = float(ctk.ScalingTracker.get_window_scaling(self))
+        except Exception:
+            scaling = 1.0
+        scaling = scaling or 1.0
+        sw = self.winfo_screenwidth()
+        sh = self.winfo_screenheight()
+        # geometry() sizes are multiplied by `scaling` (positions are not), so
+        # convert the physical screen budget — minus chrome/taskbar — to logical.
+        max_w = max(480, int((sw - 24) / scaling))
+        max_h = max(360, int((sh - 96) / scaling))
+        w = min(want_w, max_w)
+        h = min(want_h, max_h)
+        # minsize is bounded by w/h (which already fit), so it can never exceed
+        # the screen and the window can always be shown in full.
+        self.minsize(min(560, w), min(420, h))
+        px = max(0, (sw - int(w * scaling)) // 2)
+        py = max(0, (sh - int(h * scaling)) // 2 - 24)
+        self.geometry(f"{w}x{h}+{px}+{py}")
 
     def _on_tk_exception(self, exc_type, exc_value, exc_tb):
         """Tk callback-exception hook: log the traceback, show a friendly dialog."""
