@@ -19,6 +19,7 @@
 - Output integrity: **never `os.replace` a 0-content `.md`**; empty/whitespace conversion → `NOTEXT`, no file written.
 - Entry-point identifiers DO NOT change: `[project].name` stays `pdfconv`; console scripts `pdf2docx`/`pdf2docx-gui`, `pdf2docx_app.py`, and CLI `prog="pdf2docx_app"` unchanged. Only `version` → `2.0.0`, description/keywords broaden, UI copy rebrands to "MarkItAll".
 - Run commands on Windows via `./.venv/Scripts/python.exe`. Conversions need native paths (PyMuPDF rejects Git-Bash `/c/...` paths in tests — use `tmp_path`).
+- **UI consistency (REQUIRED):** every new or changed GUI element must use the existing slate-and-indigo design system — `theme.py` tokens (colors, `R_*` radii, the `ST_*` status palette, `ACCENT*`, `BORDER*`, `SURFACE`/`BG`), `self.fonts.*` (never raw font-family/size literals), the `_icon(...)` helper for glyphs, and the settings-drawer builders (`_section` / `_caption` / `_rule` / `_switch`). No ad-hoc hex colors, font names, magic sizes, or one-off widget styling. New status colors come only from the existing `ST_*` palette, and the skip-family statuses (`NOTEXT` / `ENCRYPTED` / `SKIPPED`) must read as a coherent group. New dialogs/sections match the padding, corner radius, and button styling of existing ones (e.g. mirror `PasswordDialog` / `AboutDialog` / the drawer sections). Reuse, don't reinvent.
 - Commit after every task. Pushing is the owner's call; do not push unless asked.
 
 ---
@@ -1148,10 +1149,83 @@ git commit -m "docs: README v2 scope/MCP/security/caveats + CHANGELOG"
 
 ---
 
+## Task 14: UI consistency pass
+
+**Files:**
+- Modify: `pdfconv/gui.py` (only if inconsistencies are found)
+- Test: `tests/test_gui_consistency.py` (new)
+
+**Interfaces:** none new — this task audits the GUI added in Tasks 7–10 against the design system (see the UI-consistency Global Constraint).
+
+- [ ] **Step 1: Audit new GUI code for ad-hoc styling**
+
+Review the v2 GUI diff and confirm no new hardcoded styling crept in:
+Run: `git diff 8e45562 -- pdfconv/gui.py | grep -nE "#[0-9a-fA-F]{3,6}|family=|font=\(|size=[0-9]" || echo "no raw style literals in the diff"`
+Expected: `no raw style literals in the diff` (added lines reference `theme.*`, `self.fonts.*`, `_icon(...)`, and the `_section/_caption/_rule/_switch` builders — not raw hex/font literals). If any appear, replace them with the matching token in Step 3.
+
+- [ ] **Step 2: Add a programmatic token-consistency test** (`tests/test_gui_consistency.py`)
+
+```python
+import os
+os.environ["PDFCONV_REDUCED_MOTION"] = "1"
+from pathlib import Path
+from docx import Document
+import pdfconv.gui as gui
+from pdfconv import engine, theme
+
+
+def test_skip_family_status_colors_are_palette():
+    # SKIPPED must use a real ST_* palette colour and group with the other skips.
+    label, color = gui._STATUS_DISPLAY[engine.SKIPPED]
+    assert color in (theme.ST_CONV, theme.ST_QUEUED, theme.ST_FAIL, theme.ST_DONE)
+    assert color == gui._STATUS_DISPLAY[engine.ENCRYPTED][1]  # coherent with "Locked"
+
+
+def test_about_dialog_uses_theme_and_fonts(tmp_path):
+    app = gui.App()
+    try:
+        dlg = gui.AboutDialog(app, app.fonts)
+        app.update_idletasks()
+        # Title text rebranded; window bg is the theme token.
+        assert dlg.cget("fg_color") == theme.BG or list(dlg.cget("fg_color")) == list(theme.BG)
+        dlg.destroy()
+    finally:
+        app.destroy()
+
+
+def test_window_title_rebranded():
+    app = gui.App()
+    try:
+        assert app.title() == "MarkItAll"
+    finally:
+        app.destroy()
+```
+
+- [ ] **Step 3: Run; fix any inconsistency at its source**
+
+Run: `PYTHONPATH='D:\pdftodocx' ./.venv/Scripts/python.exe -m pytest tests/test_gui_consistency.py -v`
+Expected: PASS. If a check fails, fix the offending widget to use the theme token / font / builder (do not weaken the test), then re-run.
+
+- [ ] **Step 4: Visual confirmation (real render)**
+
+Render the app and screenshot each new/changed surface; eyeball against the design system. Write `tools/_ui_shot.py` that (with `PDFCONV_REDUCED_MOTION=1`) builds `App`, adds one `.pdf` + one `.docx` + one `.txt` to the queue, opens the settings drawer (Image-captions group visible), and uses `PIL.ImageGrab` to save window-region PNGs of: (a) the header (MarkItAll branding), (b) the queue (file-type labels in the Pages column; a non-PDF row's DOCX hint with format=docx; a Skipped row), (c) the settings drawer (captions group matching the other sections), (d) the About dialog. Read each PNG and confirm fonts, colors, spacing, and button styling match the rest of the app. (DPI note: customtkinter is DPI-aware; capture `winfo_rootx/y/width/height` and lift the window first, as in the v1 drawer-fix diagnostics.)
+
+Fix any visual inconsistency at its source (theme token / font / builder), then delete the scratch script.
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add pdfconv/gui.py tests/test_gui_consistency.py
+git commit -m "test(gui): UI consistency pass (design-system tokens, rebrand, skip-status palette)"
+```
+
+---
+
 ## Final verification (after all tasks)
 
 - [ ] Full suite: `./.venv/Scripts/python.exe -m pytest -v` → all green.
 - [ ] Byte-compile: `./.venv/Scripts/python.exe -m py_compile pdf2docx_app.py pdfconv/*.py pdf2docx_app.spec`.
 - [ ] Manual smoke (real run): launch GUI, add a `.docx` + a `.pdf`, convert to Markdown; convert a PDF to DOCX; confirm a scanned/empty input shows "No text" (not an empty file).
+- [ ] UI consistency (Task 14): new surfaces (captions group, file-type labels, Skipped rows, DOCX hint, MarkItAll header/About) visually match the slate-and-indigo system — fonts, colors, spacing, and button styling are indistinguishable from the existing UI.
 - [ ] CLI: `pdf2docx_app.py --input <folder> --output out --format md` over a mixed folder; `--version` → 2.0.0.
 - [ ] MCP: wire `pdf2docx-mcp` into a client (or run `mcp` dev inspector) and call `convert_to_markdown`.
